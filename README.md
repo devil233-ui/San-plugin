@@ -5,12 +5,17 @@
 摸鱼中~~~
 
 
-#### 安装
+#### 拉取项目
 
 使用Gitee:
 ```
 git clone https://gitee.com/San-luo/San-plugin.git ./plugins/San-plugin
 ```
 
+#### 安装依赖
 
+使用pnpm:
+```
+pnpm install --filter=san-plugin
+```
 
