@@ -43,8 +43,6 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     // 新建一个页面
     const page = await browser.newPage();
-    // 设置设备缩放因子
-    await page.emulate({ deviceScaleFactor: 1 });
     // 设置页面大小
     await page.setViewport({ width: 400, height: 5200 });
 
