@@ -2,7 +2,7 @@
 //导出  类  类名:要与文件名一致 继承  插件类  
 import * as tool from '../models/tool.js';
 const master = tool.masterQQ()//获取主人QQ
- export class Helloworld extends plugin {
+ export class San extends plugin {
     constructor() {
         super({
             //后端信息

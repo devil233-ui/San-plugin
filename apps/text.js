@@ -1,6 +1,6 @@
 import * as tool from '../models/tool.js';
 import fs from 'fs'
-export class medals extends plugin {
+export class San extends plugin {
     constructor () {
       super({
         name: 'name',
@@ -27,7 +27,11 @@ export class medals extends plugin {
     };
 
     async screenshot (e){
-      let url = e.msg.substring(3)
-      tool.screenshot(e,url)
+      e.reply(e.msg.substring(3))
+      let id = await tool.location_id(e.msg.substring(3))
+      logger.info(id)
+      let url = `https://www.qweather.com/weather/${id}.html`
+      logger.info(url)
+      tool.screenshot(e,url,tool.clipRegion(0,110,400,771))
     }
   }
