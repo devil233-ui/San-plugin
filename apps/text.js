@@ -1,6 +1,6 @@
 import * as tool from '../models/tool.js';
 import fs from 'fs'
-export class San extends plugin {
+export class San_Text extends plugin {
     constructor () {
       super({
         name: 'name',
@@ -22,16 +22,19 @@ export class San extends plugin {
       })
   
     }
-    async text (e) {
-      e.reply(Bot.fl.get(tool.masterQQ()).nickname)          
+    async text (e) {   
+      let obj = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
+      logger.warn(obj)
+      const weatherPriority = obj.priority.find(item => item.weather !== undefined)?.weather;
+      logger.warn(obj.priority[0])
+      logger.warn(weatherPriority)
+
+
+
+
     };
 
     async screenshot (e){
-      e.reply(e.msg.substring(3))
-      let id = await tool.location_id(e.msg.substring(3))
-      logger.info(id)
-      let url = `https://www.qweather.com/weather/${id}.html`
-      logger.info(url)
-      tool.screenshot(e,url,tool.clipRegion(0,110,400,771))
+
     }
   }

@@ -26,7 +26,7 @@ export function masterQQ(){
  * @param gopath 截图的html文件或网址URL(可不含协议头)
  * @param outpath 图片生成路径,可选
  */
-export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San-plugin/resources/img/screenshot.jpeg") {
+export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San-plugin/resources/img/screenshot.jepg") {
 
     let url;
 
@@ -43,6 +43,8 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     // 新建一个页面
     const page = await browser.newPage();
+    // 设置设备缩放因子
+    await page.emulate({ deviceScaleFactor: 1 });
     // 设置页面大小
     await page.setViewport({ width: 400, height: 5200 });
 
@@ -55,7 +57,8 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
         fullPage: false,
         clip: clipRegion ,// 使用传递进来的裁剪区域
         type: 'jpeg',
-        quality: 80 // JPEG图片的质量，范围是1到100
+        quality: 70 ,// JPEG图片的质量，范围是1到100
+        omitBackground: true // 防止背景颜色影响透明度
     });
 
     // 关闭浏览器
@@ -68,8 +71,8 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     try {
         await fs.promises.unlink(outpath);
     } catch (err) {
-        console.error(`——————San-plugin报错————`);
-        console.error(err);
+        logger.error(`——————San-plugin报错————`);
+        logger.error(err);
     }
 }
 
@@ -88,7 +91,6 @@ export function clipRegion(x, y, width, height) {
  *  生成和风天气的对应地区URL
  * @param  location 地区名称,支持中英文模糊查询
  */
-// 定义一个异步函数location_id，接收一个参数location
 export async function location_url(location) {
     try {
         // 使用fetch方法向指定的URL发送请求，并等待响应
@@ -107,3 +109,28 @@ export async function location_url(location) {
     }
 }
 
+
+export async function readyaml(filePath) {
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+          console.error('读取yaml错误', err);
+          reject(err);
+          return;
+        }
+        try {
+          const obj = yaml.load(data);
+          resolve(obj);
+        } catch (err) {
+          console.error("yaml转换错误", err);
+          reject(err);
+        }
+      });
+    });
+  }
+
+  export async function set_priority(name){
+    const obj = await readyaml('./plugins/San-plugin/config/config.yaml')
+    const priority = obj.priority.find(item => item[name] !== undefined)?.[name];
+    return priority
+  }

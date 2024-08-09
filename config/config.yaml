@@ -1,4 +1,6 @@
-datetime: 
-  year: 0000
-  month: 00
-  day: 00
+#图像质量 范围1-100 建议>70
+img-quality: 70
+#指令优先级
+priority:
+  - weather: 10
+  - leave-messages: 10
