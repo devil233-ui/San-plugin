@@ -27,8 +27,6 @@ export class medals extends plugin {
     };
 
     async screenshot (e){
-      e.reply(e.msg.substring(3))
-      let url = e.msg.substring(3)
       tool.screenshot(e,url)
     }
   }
