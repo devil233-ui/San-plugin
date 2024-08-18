@@ -44,7 +44,7 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     // 新建一个页面
     const page = await browser.newPage();
     // 设置页面大小
-    await page.setViewport({ width: 400, height: 5200 });
+    await page.setViewport({ width: 400, height: 1000 });
 
     // 打开HTML文件
     await page.goto(url, { waitUntil: 'networkidle2' });
