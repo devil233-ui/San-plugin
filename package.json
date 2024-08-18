@@ -5,14 +5,20 @@
   "type": "module",
   "module": "index.js",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "imports": {
+    "#yunzai": "./../../lib/index.js",
+    "#miao": "./../../plugins/miao-plugin/components/index.js"
   },
   "dependencies": {
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {},
   "keywords": [],
-  "author": "San散"
+  "author": "San散",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/San-luo/San-plugin"
+  },
+  "license": "ISC"
 }

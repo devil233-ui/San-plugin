@@ -49,13 +49,16 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     // 打开HTML文件
     await page.goto(url, { waitUntil: 'networkidle2' });
 
+    //获取图像质量配置信息
+    const Set_Quality = await set_otherCfg(`imgQuality`)
+
     // 将页面渲染为图片并保存到本地
     await page.screenshot({
         path: outpath,
         fullPage: false,
         clip: clipRegion ,// 使用传递进来的裁剪区域
         type: 'jpeg',
-        quality: 70 ,// JPEG图片的质量，范围是1到100
+        quality: Set_Quality ,// JPEG图片的质量，范围是1到100
         omitBackground: true // 防止背景颜色影响透明度
     });
 
@@ -108,6 +111,12 @@ export async function location_url(location) {
 }
 
 
+/**
+ * 这是一个异步读取并解析YAML文件的函数。
+ *
+ * @param {String} filePath - 需要读取的YAML文件的路径。
+ * @return {Promise} 返回一个Promise对象。
+ */
 export async function readyaml(filePath) {
     return new Promise((resolve, reject) => {
       fs.readFile(filePath, 'utf8', (err, data) => {
@@ -127,8 +136,26 @@ export async function readyaml(filePath) {
     });
   }
 
+    /**
+     * 这是一个异步函数，用于设置优先级。
+     *
+     * @param {String} name - 需要查找的name属性值。
+     * @return {String} 返回找到的name属性值，如果没有找到则返回undefined。
+     */
   export async function set_priority(name){
-    const obj = await readyaml('./plugins/San-plugin/config/config.yaml')
-    const priority = obj.priority.find(item => item[name] !== undefined)?.[name];
-    return priority
+      const obj = await readyaml('./plugins/San-plugin/config/config.yaml');
+      const priority = obj.priority.find(item => item[name] !== undefined)?.[name];
+      return priority;
   }
+
+
+  export async function set_otherCfg(name){
+    const obj = await readyaml('./plugins/San-plugin/config/config.yaml');
+    const CfgInfo = obj[name]
+    return CfgInfo;
+}
+
+
+
+
+

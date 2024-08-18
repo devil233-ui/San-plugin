@@ -1,6 +1,4 @@
-#图像质量 范围1-100 建议>70
-img-quality: 70
-#指令优先级
+imgQuality: 70
 priority:
-  - weather: 10
-  - leave-messages: 10
+  - weather: 20
+  - LeaveMessages: 10
