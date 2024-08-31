@@ -16,7 +16,7 @@
     "path": "*",
     "lodash": "*",
     "axios": "*",
-    "glob": "*",
+    "glob": "*"
   },
   "devDependencies": {},
   "keywords": [],
