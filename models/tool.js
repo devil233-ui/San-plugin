@@ -36,7 +36,7 @@ export function ismaster(qq){
     const data = yaml.load(fileContents);
     // 获取键的值
     const keyValue = data.masterQQ; 
-    if(keyValue.inclouds(qq)){
+    if(keyValue.includes(qq)){
       return true
     }else{
       return false
