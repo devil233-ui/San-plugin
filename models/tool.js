@@ -4,6 +4,7 @@ import path from 'path';
 import fsPromises from 'fs/promises';
 import puppeteer from 'puppeteer';
 import axios from 'axios';
+import { createCanvas, loadImage } from 'canvas';
 
 /**
  * 获取主人qq号
@@ -36,7 +37,7 @@ export function ismaster(qq){
     const data = yaml.load(fileContents);
     // 获取键的值
     const keyValue = data.masterQQ; 
-    if(keyValue.inclouds(qq)){
+    if(keyValue.includes(qq)){
       return true
     }else{
       return false
@@ -299,4 +300,29 @@ export async function countFilesInDirectorySync(directoryPath) {
     }
     return -1; //抛出异常
   }
+}
+
+export async function makeEmoji(txt){
+  const outputPath = './plugins/San-plugin/resources/img/output-举牌.gif';
+  
+  // 加载图片
+  const image = await loadImage('https://sanluo.top:8888/down/f2NQVSrrXVxB.jpeg');
+
+  // 创建一个与输入图片大小相同的画布
+  const canvas = createCanvas(image.width, image.height);
+  const context = canvas.getContext('2d');
+
+  // 将图片绘制到画布上
+  context.drawImage(image, 0, 0, image.width, image.height);
+
+  // 设置字体样式
+  context.font = 'bold 30px Arial';
+  context.fillStyle = 'black';
+  context.textAlign = 'center'; // 文字居中显示
+  context.fillText(txt, 350, 575); // 在图片底部中央添加文字
+
+  // 保存修改后的图片
+  const output = canvas.createJPEGStream();
+   output.pipe(fs.createWriteStream(outputPath));
+  console.log('Image with text created!');
 }
