@@ -11,14 +11,13 @@
     "#miao": "./../../plugins/miao-plugin/components/index.js"
   },
   "dependencies": {
-    "js-yaml": "*",
-    "path": "*",
-    "lodash": "*",
-    "axios": "*",
-    "glob": "*",
-    "canvas": "*"
+    "axios": "^1.7.6",
+    "canvas": "^2.11.2",
+    "glob": "^11.0.0",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21",
+    "path": "^0.12.7"
   },
-  "devDependencies": {},
   "keywords": [],
   "author": "San散",
   "repository": {

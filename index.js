@@ -8,41 +8,26 @@ logger.info('San-plugin加载中....')
 logger.info('-------------------------')
 //如需更多可复制粘贴
 //info可替换为: debug mark error
-
-async function loadDependencies(dependencyList) {
-  for (const i of dependencyList) {
-    try {
-      await import(`${i}`);
-    } catch (error) {
-      logger.warn('-------San依赖缺失-----------');
-      logger.warn(`请运行: pnpm install --filter=san-plugin`);
-      let msg = `请运行:  pnpm install --filter=san-plugin  `
-      common.relpyPrivate(cfg.masterQQ[0], msg)
-      logger.warn(`----------------------------`);
-      return; // 这里可以安全地使用 return 因为我们现在在一个异步函数中
+  async function checkDependencies() {
+    let packagejson = await tool.readFromJsonFile('./plugins/San-plugin/package.json')
+    const dependencyList = Object.keys(packagejson.dependencies) 
+    for (let i of dependencyList) {
+      try {
+        await import(`${i}`);
+      } catch (error) {
+        logger.warn('-------San插件依赖缺失-----------');
+        logger.warn(`请运行: pnpm install --filter=san-plugin`);
+  
+        let msg = `San插件依赖缺失,请运行: pnpm install --filter=san-plugin`;
+        common.relpyPrivate(cfg.masterQQ[0], msg);
+        logger.warn(`----------------------------`);
+        return;
+      }
     }
   }
-}
-
-
-
-let packagejson = await tool.readFromJsonFile('./plugins/San-plugin/package.json')
-const dependencylist = Object.keys(packagejson.dependencies)
-// for (i of dependencylist){
-// try {
-//   await import(`${i}`)
-// } catch (error) {
-//   logger.warn('-------San依赖缺失-----------');
-//   logger.warn(`请运行:  pnpm install --filter=san-plugin  `)
-//   let msg = `请运行:  pnpm install --filter=san-plugin  `
-//   common.relpyPrivate(cfg.masterQQ[0], msg)
-//   logger.warn(`----------------------------`) 
-//   return
-// }
-// }  
-loadDependencies(dependencylist)
-
-
+  
+  // 调用函数
+  checkDependencies();
 
 //加载插件
 const files = fs.readdirSync('./plugins/San-plugin/apps').filter(file => file.endsWith('.js'))
