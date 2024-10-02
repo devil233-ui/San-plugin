@@ -9,7 +9,7 @@ export class San_Weather extends plugin {
         priority: cfg_priority,//优先级
         rule: [
             { 
-          reg: '^#[\u4e00-\u9fa5A-Za-z]+天气$',
+          reg: '^#?[\u4e00-\u9fa5A-Za-z]+天气$',
           fnc: 'weather_info'
                 // 执行方法
             }   
@@ -28,6 +28,6 @@ export class San_Weather extends plugin {
         // 获取对应的和风天气url
         let url = await tool.location_url(location)
         // 截取指定区域
-        tool.screenshot(e,url,tool.clipRegion(0,110,400,771))
+        tool.screenshot(e,url,tool.clipRegion(0,110,400,700))
     }
 }

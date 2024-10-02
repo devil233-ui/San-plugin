@@ -5,21 +5,24 @@ import fsPromises from 'fs/promises';
 import puppeteer from 'puppeteer';
 import axios from 'axios';
 import { createCanvas, loadImage } from 'canvas';
+import common from '../../../lib/common/common.js';
+import config from '../../../lib/config/config.js'
 
 /**
  * 获取主人qq号
  * 返回number 类型
  */
 export function masterQQ(){
-    // 读取YAML文件
-    const fileContents = fs.readFileSync('./config/config/other.yaml', 'utf8');
-    // 将YAML内容解析为JavaScript对象
-    const data = yaml.load(fileContents);
-    // 获取键的值
-    const keyValue = data.masterQQ; 
-    // 转换为字符串类型 
-    const masterqq = keyValue[0]
-    //.toString()
+    // // 读取YAML文件
+    // const fileContents = fs.readFileSync('./config/config/other.yaml', 'utf8');
+    // // 将YAML内容解析为JavaScript对象
+    // const data = yaml.load(fileContents);
+    // // 获取键的值
+    // const keyValue = data.masterQQ; 
+    // // 转换为字符串类型 
+    // const masterqq = keyValue[0]
+    // //.toString()
+    let masterqq = config.masterQQ[0]
     //返回主人QQ号
     return masterqq
 }
@@ -32,11 +35,11 @@ export function masterQQ(){
  * @return {Boolean} 如果输入的QQ在masterQQ列表中，返回true；否则，返回false。
  */
 export function ismaster(qq){
-  const fileContents = fs.readFileSync('./config/config/other.yaml', 'utf8');
-    // 将YAML内容解析为JavaScript对象
-    const data = yaml.load(fileContents);
+  // const fileContents = fs.readFileSync('./config/config/other.yaml', 'utf8');
+  //   // 将YAML内容解析为JavaScript对象
+  //   const data = yaml.load(fileContents);
     // 获取键的值
-    const keyValue = data.masterQQ; 
+    const keyValue = config.masterQQ; 
     if(keyValue.includes(qq)){
       return true
     }else{
@@ -69,7 +72,7 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
     // 新建一个页面
     const page = await browser.newPage();
     // 设置页面大小
-    await page.setViewport({ width: 400, height: 1000 });
+    await page.setViewport({ width: 400, height: 900 });
 
     // 打开HTML文件
     await page.goto(url, { waitUntil: 'networkidle2' });

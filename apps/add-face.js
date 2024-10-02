@@ -14,24 +14,21 @@ export class San_AddFace extends plugin {
       dsc: 'San-plugin表情功能',
       event: 'message', //发出提示信息
       priority: '49999', //优先级
-      rule: [{
-        reg: '^#text$',
-        fnc: 'text'
-        // 执行方法
-      },
+      rule: [
         {
           reg: '^#添加.*$',
           fnc: 'add'
           // 执行方法
         },
         {
-          reg: '^#(散|san|San)设置表情添加(开启|关闭)$',
+          reg: '^#?(散|san|San)设置表情添加(开启|关闭)$',
           fnc: 'addswitch'
           // 执行方法
         },
         {//^(?=.*[^\d])[^\d]*\d*[^\d]*$
           reg: '^(?=.*[^\d])[^\d]*\d*[^\d]*$',
           fnc: 'getText',
+          log: false,
         },
       ]
     })
@@ -72,6 +69,12 @@ export class San_AddFace extends plugin {
       let type; // 声明变量
       e.reply(obj[msg].list[randomIndex].content)
     }//text消息处理完毕
+
+    //以下下为text消息的处理
+    if (matchType == "face") {
+      let type; // 声明变量
+      e.reply(segment.face(obj[msg].list[randomIndex].id))
+    }//text消息处理完毕
   }
 
 
@@ -94,7 +97,7 @@ export class San_AddFace extends plugin {
           'list': [{
             'user_id': e.user_id,
             'time': tool.convertTime(Date.now(), 0),
-            'type': e.message[0].type,
+            'type': this.e.message[0].type,
             'content': msg
           },
           ]
@@ -106,7 +109,7 @@ export class San_AddFace extends plugin {
           'list': [{
             'user_id': e.user_id,
             'time': tool.convertTime(Date.now(), 0),
-            'type': e.message[0].type,
+            'type': this.e.message[0].type,
             'content': msg
           },
           ]
@@ -118,7 +121,7 @@ export class San_AddFace extends plugin {
           {
             'user_id': e.user_id,
             'time': tool.convertTime(Date.now(), 0),
-            'type': e.message[0].type,
+            'type': this.e.message[0].type,
             'content': msg
           }
         )
@@ -197,10 +200,50 @@ export class San_AddFace extends plugin {
     }//json类型消息处理完毕
 
     //以下为face类型消息处理
-    if (msgtype == "face") {
-      e.reply("face类型消息还没写,先鸽着.....")
+    if (msgtype == 'face') {
+      //logger.info([tool.convertTime(Date.now(),0),e.message[0].type,msg,e.user_id])
+      let date = {}
+      if (fs.existsSync(faceFile)) {
+        date = await tool.readFromJsonFile(faceFile)
+      } else {
+        date[`${tag}`] = {
+
+          'list': [{
+            'user_id': e.user_id,
+            'time': tool.convertTime(Date.now(), 0),
+            'type': this.e.message[0].type,
+            'id': this.e.message[0].id
+          },
+          ]
+        }
+      }//判断是否有userface文件,若无则进行初始化
+      if (date[tag] == undefined) {
+        date[`${tag}`] = {
+
+          'list': [{
+            'user_id': e.user_id,
+            'time': tool.convertTime(Date.now(), 0),
+            'type': this.e.message[0].type,
+            'id': this.e.message[0].id
+          },
+          ]
+        }
+        //判断是否存在同名tag,存在则使用初始化方法，不存在则使用push方法
+      } else {
+
+        date[tag].list.push(
+          {
+            'user_id': e.user_id,
+            'time': tool.convertTime(Date.now(), 0),
+            'type': this.e.message[0].type,
+            'id': this.e.message[0].id
+          }
+        )
+
+      }
+      tool.JsonWrite(date, faceFile)
+      e.reply(`${tag} 添加成功`)
       this.finish('addnext')
-      return
     }//face类型消息处理完毕
 
 
@@ -250,7 +293,7 @@ export class San_AddFace extends plugin {
   }
 
   async addswitch (e) {
-    if(!tool.ismaster(e.user_id)){
+    if(e.user_id != config.masterQQ[0]){
       e.reply('你不是我的主人哦')
       return false
     }
@@ -364,6 +407,7 @@ export class San_ReplyFace extends plugin {
         {
           reg: '^\d+$',
           fnc: 'getText',
+          log: false,
         },
       ]
     })

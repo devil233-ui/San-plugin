@@ -1,5 +1,6 @@
 //import plugin from '../../lib/plugins/plugin.js'
 //导出  类  类名:要与文件名一致 继承  插件类  
+import { segment } from 'oicq';
 import * as tool from '../models/tool.js';
 const master = tool.masterQQ()//获取主人QQ
 const cfg_priority = await tool.set_priority("leave-messages")
@@ -43,16 +44,33 @@ const cfg_priority = await tool.set_priority("leave-messages")
     async hei(e) {
         //获取消息
         let xiaoxi = this.e;//消息内容
-        let neirong = [
+        Bot.pickUser(master).sendMsg([
             "主人有人给你留言啦",
             
             "\n"+Bot.pickFriend(e.user_id).nickname+e.user_id,
             segment.image(Bot.pickUser(e.user_id).getAvatarUrl()),
-            "留言内容："+xiaoxi,
-         
-        ]
-        Bot.pickUser(master).sendMsg(neirong)
+            "留言内容："
+        ])
+
+        async function replyxiaoxi(){
+            logger.info(xiaoxi.message[0].type)
+        if (xiaoxi.message[0].type == "image"){
+             let neirong = segment.image(xiaoxi.message[0].url)
+             Bot.pickUser(master).sendMsg(neirong)
+        }
+        if (xiaoxi.message[0].type == "text"){
+            let neirong = xiaoxi.msg
+            Bot.pickUser(master).sendMsg(neirong)
+        }
+        if (xiaoxi.message[0].type == "face"){
+            let neirong = segment.face(xiaoxi.message[0].id)
+            Bot.pickUser(master).sendMsg(neirong)
+        }
         e.reply("主人已经收到你的消息啦")
+        }
+            setTimeout(() => {
+            replyxiaoxi()
+        }, 500);
         this.finish('hei')
     }   
 }
