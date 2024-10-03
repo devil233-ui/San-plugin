@@ -59,8 +59,7 @@ const cfg_priority = await tool.set_priority("leave-messages")
              Bot.pickUser(master).sendMsg(neirong)
         }
         if (xiaoxi.message[0].type == "text"){
-            let neirong = xiaoxi.msg
-            Bot.pickUser(master).sendMsg(neirong)
+            Bot.pickUser(master).sendMsg(["",""+xiaoxi])
         }
         if (xiaoxi.message[0].type == "face"){
             let neirong = segment.face(xiaoxi.message[0].id)
@@ -70,7 +69,7 @@ const cfg_priority = await tool.set_priority("leave-messages")
         }
             setTimeout(() => {
             replyxiaoxi()
-        }, 500);
+        }, 1000);
         this.finish('hei')
     }   
 }
