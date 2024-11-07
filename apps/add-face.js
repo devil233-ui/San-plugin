@@ -41,7 +41,12 @@ export class San_AddFace extends plugin {
     async addnext(e) {
 
         let msg = this.e.msg
+        if (this.e.message[0].type == 'long_msg'){
+        this.e.message.shift()
+      
+        }
         let msgtype = this.e.message[0].type
+
 
         //以下为text类型消息的处理
         if (msgtype == 'text') {
