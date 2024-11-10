@@ -13,7 +13,7 @@ export class San_AddFace extends plugin {
             name: 'San-plugin表情功能',
             dsc: 'San-plugin表情功能',
             event: 'message', //发出提示信息
-            priority: '10', //优先级
+            priority: '-100', //优先级
             rule: [
                 {
                     reg: '^#添加.*$',
@@ -30,7 +30,7 @@ export class San_AddFace extends plugin {
                     fnc: 'facelist'
                 },
                 {
-                    reg: '^#?(散|san|San)?删除(表情全部项)?(.*?)(第(\d*)项)?$',
+                    reg: '^#?(散|san|San)?表情删除(全部项)?(.*?)(第(\d*)项)?$',
                     fnc: 'deleteface'
                 },
             ]
@@ -307,7 +307,8 @@ export class San_AddFace extends plugin {
 
 
     async deleteface(e){
-        let reg = /^#?(散|san|San)?删除(表情全部项)?(.*?)(第(\d*)项)?$/
+        
+        let reg = /^#?(散|san|San)?表情删除(全部项)?(.*?)(第(\d*)项)?$/
         const str = e.msg
         const match = str.match(reg)
         let isall = match[2] ? true : false
