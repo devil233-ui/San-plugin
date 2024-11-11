@@ -26,7 +26,7 @@ export class San_AddFace extends plugin {
                     // 执行方法
                 },
                 {
-                    reg: '#?(散|san|San)?表情列表',
+                    reg: '#表情列表$',
                     fnc: 'facelist'
                 },
                 {
@@ -306,7 +306,7 @@ export class San_AddFace extends plugin {
             t++
 
         }
-        let replymsg = await common.makeForwardMsg(e,[`总计${keys.length}个表情`,msg],"表情列表")
+        let replymsg = await common.makeForwardMsg(e,[`总计${keys.length}个表情`,msg],"-表情列表-")
         e.reply(replymsg)
     }
 
