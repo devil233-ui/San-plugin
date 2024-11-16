@@ -41,60 +41,7 @@ export class San_AddFace extends plugin {
     async addnext(e) {
 
         let msg = this.e.msg
-        if (this.e.message[0].type == 'long_msg'){
-        this.e.message.shift()
-      
-        }
         let msgtype = this.e.message[0].type
-
-
-        //以下为text类型消息的处理
-        if (msgtype == 'text') {
-            //logger.info([tool.convertTime(Date.now(),0),e.message[0].type,msg,e.user_id])
-            let date = {}
-            if (fs.existsSync(faceFile)) {
-                date = await tool.readFromJsonFile(faceFile)
-            } else {
-                date[`${tag}`] = {
-
-                    'list': [{
-                        'user_id': e.user_id,
-                        'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'content': msg
-                    },
-                    ]
-                }
-            }//判断是否有userface文件,若无则进行初始化
-            if (date[tag] == undefined) {
-                date[`${tag}`] = {
-
-                    'list': [{
-                        'user_id': e.user_id,
-                        'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'content': msg
-                    },
-                    ]
-                }
-                //判断是否存在同名tag,存在则使用初始化方法，不存在则使用push方法
-            } else {
-
-                date[tag].list.push(
-                    {
-                        'user_id': e.user_id,
-                        'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'content': msg
-                    }
-                )
-
-            }
-            tool.JsonWrite(date, faceFile)
-            e.reply(`${tag} 添加成功`)
-            this.finish('addnext')
-        }//text类型消息处理结束
-
 
 
         //以下为image类型的消息处理
@@ -153,18 +100,7 @@ export class San_AddFace extends plugin {
             tool.JsonWrite(date, faceFile)
             e.reply(`${tag} 添加成功`)
             this.finish('addnext')
-        }//image类型消息处理完毕
-
-        //以下为json类型消息处理
-        if (msgtype == "json") {
-            e.reply("json类型消息还没写,先鸽着.....")
-            this.finish('addnext')
-            return
-        }//json类型消息处理完毕
-
-        //以下为face类型消息处理
-        if (msgtype == 'face') {
-            //logger.info([tool.convertTime(Date.now(),0),e.message[0].type,msg,e.user_id])
+        }else{                  //image类型消息处理完毕
             let date = {}
             if (fs.existsSync(faceFile)) {
                 date = await tool.readFromJsonFile(faceFile)
@@ -174,8 +110,8 @@ export class San_AddFace extends plugin {
                     'list': [{
                         'user_id': e.user_id,
                         'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'id': this.e.message[0].id
+                        'type': "other",
+                        'msg': this.e.message
                     },
                     ]
                 }
@@ -186,8 +122,8 @@ export class San_AddFace extends plugin {
                     'list': [{
                         'user_id': e.user_id,
                         'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'id': this.e.message[0].id
+                        'type': "other",
+                        'msg': this.e.message
                     },
                     ]
                 }
@@ -198,8 +134,8 @@ export class San_AddFace extends plugin {
                     {
                         'user_id': e.user_id,
                         'time': tool.convertTime(Date.now(), 0),
-                        'type': this.e.message[0].type,
-                        'id': this.e.message[0].id
+                        'type': "other",
+                        'msg': this.e.message
                     }
                 )
 
@@ -207,7 +143,7 @@ export class San_AddFace extends plugin {
             tool.JsonWrite(date, faceFile)
             e.reply(`${tag} 添加成功`)
             this.finish('addnext')
-        }//face类型消息处理完毕
+        }                           
 
             
     }
@@ -450,15 +386,8 @@ export async function facereply(e){
             e.reply([segment.image(obj[msg].list[randomIndex].imageFile)])
         }//image消息处理完毕
 
-        //以下下为text消息的处理
-        if (matchType == "text") {
-            let type; // 声明变量
-            e.reply(obj[msg].list[randomIndex].content)
-        }//text消息处理完毕
-
-        //以下下为face消息的处理
-        if (matchType == "face") {
-            let type; // 声明变量
-            e.reply(segment.face(obj[msg].list[randomIndex].id))
-        }//face消息处理完毕
+        //以下为other消息的处理
+        if (matchType == "other") {
+            e.reply(obj[msg].list[randomIndex].msg)
+        }//image消息处理完毕        
 }
