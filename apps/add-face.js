@@ -30,7 +30,7 @@ export class San_AddFace extends plugin {
                     fnc: 'facelist'
                 },
                 {
-                    reg: '^#?(散|san|San)?表情删除(全部项)?(.*?)(第(\d*)项)?$',
+                    reg: '^#?(散|san|San)?表情删除(全部项(.*?))?$',
                     fnc: 'deleteface'
                 },
             ]
@@ -249,35 +249,38 @@ export class San_AddFace extends plugin {
 
     async deleteface(e){
         
-        let reg = /^#?(散|san|San)?表情删除(全部项)?(.*?)(第(\d*)项)?$/
+        let reg = /^#?(散|san|San)?表情删除(全部项(.*?))?$/
         const str = e.msg
         const match = str.match(reg)
+        //logger.info(match)
         let isall = match[2] ? true : false
         let facetag = match[3]//tag名  没有时为 ''
-        let deleteNumber = match[5]//项数  没有时为 ''
         let facelist = await tool.readFromJsonFile(faceFile)
         let keys = Object.keys(facelist)
-        if (!keys.includes(facetag)){
-            e.reply(`表情- ${facetag} - 不存在!`)
-            return//不存在此表情tag
-        }
-        if (facetag == ''){
-            e.reply("需要删除的表情tag为空!")
-            return//空tag
-        }else{
+
             if(isall){
                 if(!tool.ismaster(e.user_id)){
+                    if (facetag == ''){
+                        e.reply("需要删除的表情tag为空!")
+                        return//空tag
+                    }
+
+                    if (!keys.includes(facetag)){
+                        e.reply(`表情- ${facetag} - 不存在!`)
+                        return//不存在此表情tag
+                    }
+
                     e.reply("非主人无法删除表情包含的全部项")
                     return//非主人尝试删除全部项
                 }
             }
-        }
+        
 
         //删除全部项
         if (isall){
-            logger.info(facelist)
+            //logger.info(facelist)
             delete facelist[facetag]
-            logger.info(facelist)
+            //logger.info(facelist)
             await tool.JsonWrite(facelist,faceFile)
 
             e.reply(`已删除- ${facetag} -包含的全部项`)
@@ -285,9 +288,47 @@ export class San_AddFace extends plugin {
         
 
         //删除指定项
-        // if (!isall){
+         if (!isall){
             
-        // }
+            if (!("source" in e)){
+                e.reply("请引用消息来删除")
+                return
+            }
+            let targetRand = e.source.rand// 目标rand值
+            let obj = await tool.readFromJsonFile(faceFile)
+            
+            let foundAndDeleted = false;
+
+            // 遍历对象的每个键
+            for (let key in obj) {
+              if (obj[key].list && Array.isArray(obj[key].list)) {
+                // 使用 filter 方法创建一个新的数组，排除掉包含目标 rand 值的对象
+                const newList = obj[key].list.filter(item => {
+                  if (item.rand && item.rand.includes(targetRand)) {
+                    foundAndDeleted = true;
+                    return false;
+                  }
+                  return true;
+                });
+            
+                obj[key].list = newList;
+            
+                // 如果过滤后的 list 数组为空，删除该键
+                if (obj[key].list.length === 0) {
+                  delete obj[key];
+                }
+              }
+            }
+            
+            if (!foundAndDeleted) {
+              e.reply("没有找到该表情")
+            } else {
+                await tool.JsonWrite(obj,faceFile)
+                e.reply('已删除该项表情')
+            }
+
+
+         }
 
     }
 
@@ -380,14 +421,29 @@ export async function facereply(e){
         }
         const randomIndex = Math.floor(Math.random() * obj[msg].list.length);
         const matchType = obj[msg].list[randomIndex].type
+        let face = obj[msg].list[randomIndex]
 
+        let sendmsg 
         //以下为iamge消息的处理
         if (matchType == "image") {
-            e.reply([segment.image(obj[msg].list[randomIndex].imageFile)])
+            sendmsg = await e.reply([segment.image(face.imageFile)])
         }//image消息处理完毕
 
         //以下为other消息的处理
         if (matchType == "other") {
-            e.reply(obj[msg].list[randomIndex].msg)
-        }//image消息处理完毕        
+            sendmsg = await e.reply(face.msg)
+        }//image消息处理完毕  
+        
+        if ("rand" in face){
+            if(face["rand"].length >= 5){
+                face["rand"].shift()
+                face["rand"].push(sendmsg.rand)
+            }else{
+                face["rand"].push(sendmsg.rand)
+            }   
+        }else{
+
+            face["rand"] = [sendmsg.rand]           
+        }
+        tool.JsonWrite(obj, faceFile)
 }
