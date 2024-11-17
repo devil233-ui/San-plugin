@@ -4,7 +4,6 @@ import path from 'path';
 import fsPromises from 'fs/promises';
 import puppeteer from 'puppeteer';
 import axios from 'axios';
-import { createCanvas, loadImage } from 'canvas';
 import common from '../../../lib/common/common.js';
 import config from '../../../lib/config/config.js'
 
