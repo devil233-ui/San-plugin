@@ -3,7 +3,7 @@ import fs from 'fs';
 import yaml from 'js-yaml';
 import path from 'path';
 import common from '../../../lib/common/common.js';
-let Trans_tag//用作中转变量
+let user_tags = {}//用作中转变量
 
 let faceFile = "./plugins/San-plugin/resources/face/userface.json"
 export class San_AddFace extends plugin {
@@ -38,12 +38,14 @@ export class San_AddFace extends plugin {
     }
 
     async addnext(e) {
-        const tag = Trans_tag
+        const tag = user_tags[this.e.user_id]
         let msg = this.e.msg
         let msgtype = this.e.message[0].type
-        const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止'];
+        const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止','停止','#结束添加', '#终止添加', '#停止添加', '#放弃添加', '#终止','#停止'];
         if (stoplist.includes(msg)) {
             e.reply('已放弃本次添加');
+            delete user_tags[e.user_id]; // 清除用户的tag
+            this.finish('addnext')
             return;
         }
 
@@ -146,6 +148,7 @@ export class San_AddFace extends plugin {
             }
             tool.JsonWrite(date, faceFile)
             e.reply(`${tag} 添加成功`)
+            delete user_tags[e.user_id]; // 清除用户的tag
             this.finish('addnext')
         }                           
 
@@ -184,7 +187,7 @@ export class San_AddFace extends plugin {
             e.reply("tag禁止为空!")
             return
         } else {
-            Trans_tag = match[1] //获取到添加tag
+            user_tags[e.user_id] = match[1] //获取到添加tag
             e.reply("请发送添加内容")
         }
 
