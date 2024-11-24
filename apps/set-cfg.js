@@ -33,7 +33,7 @@ export class San_SetCfg extends plugin {
             let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')  
             let ChangeInfo = parseInt(match[3],10)
             switch (match[2]) {
-                case `天气图像质量`:
+                case `图像质量`:
                     Cfg.imgQuality = ChangeInfo ;
                     break;
                 case `优先级天气`:
@@ -57,7 +57,7 @@ export class San_SetCfg extends plugin {
             Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')  
 
             let CgfInfo =[
-                `天气图像质量：${Cfg.imgQuality}`,
+                `图像质量：${Cfg.imgQuality}`,
             ]
             let PriorityInfo = [
                 `天气：${Cfg.priority[0].weather}`,

@@ -89,12 +89,11 @@ export async function screenshot(e, gopath, clipRegion, outpath = "./plugins/San
         omitBackground: true // 防止背景颜色影响透明度
     });
 
-    // 关闭浏览器
-    await browser.close();
-
     // 发送图片
     await e.reply(segment.image(outpath));
 
+    // 关闭浏览器
+    browser.close();
     // 异步删除文件
     try {
         await fs.promises.unlink(outpath);

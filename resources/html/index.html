@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>San-plugin Help</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('../img/background.jpg'); /* 替换为你的background图片路径 */
+            background-size: cover;
+            background-position: center;
+        }
+        .container {
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            background-color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+        .header, .footer {
+            margin-bottom: 20px;
+        }
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .feature {
+            width: 20%;
+            margin: 10px;
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px); /* 毛玻璃效果 */
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        .feature h2 {
+            color: #1a1e4d; /* 功能标题的颜色 */
+            font-size: 2.0em; /* 功能标题的字体大小 */
+        }
+
+        .feature p {
+            color: #343e44; /* 功能描述的颜色 */
+            font-size: 1.3em; /* 功能描述的字体大小 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>San-plugin帮助</h1>
+        </div>
+        <div class="features" id="features">
+            <!-- 功能块将通过JavaScript动态生成 -->
+        </div>
+        <div class="footer">
+            <p>Crtead by San-plugin</p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const featuresData = [
+                { title: "#san设置表情添加开启(关闭)", description: "开启(关闭)表情添加功能,重启生效" },
+                { title: "#添加xxx", description: "添加随机关键词回复" },
+                { title: "#连续添加xxx", description: "连续添加随机关键词回复,结束请发#结束添加" },
+                { title: "#表情删除", description: "需引用bot所发表情,删除对应单项表情" },
+                { title: "#表情删除全部项xxx", description: "删除指定关键词对应的全部表情,仅主人可用" },
+                { title: "xxx天气", description: "获取天气卡片,支持模糊" },
+                { title: "#留言", description: "可向bot主人留言" },
+                { title: "#san设置", description: "查看San插件的设置信息" },
+                { title: "#san设置图像质量100", description: "设置图像生成质量,范围为1-100" },
+                // 可以继续添加更多功能块数据...
+            ];
+
+            const featuresContainer = document.getElementById("features");
+            featuresData.forEach(feature => {
+                const featureElement = document.createElement("div");
+                featureElement.className = "feature";
+                featureElement.innerHTML = `<h2>${feature.title}</h2><p>${feature.description}</p>`;
+                featuresContainer.appendChild(featureElement);
+            });
+
+            // 动态设置容器宽度以适应背景图片宽度
+            const img = new Image();
+            img.src = 'background.jpg'; // 替换为你的background图片路径
+            img.onload = () => {
+                document.querySelector('.container').style.width = `${img.width}px`;
+            };
+        });
+    </script>
+</body>
+</html>

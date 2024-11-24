@@ -15,7 +15,7 @@ export class San_AddFace extends plugin {
             priority: '-100', //优先级
             rule: [
                 {
-                    reg: '^#添加.*$',
+                    reg: '^#(批量|连续|多个|持续)?添加.*$',
                     fnc: 'add'
                     // 执行方法
                 },
@@ -38,16 +38,27 @@ export class San_AddFace extends plugin {
     }
 
     async addnext(e) {
-        const tag = user_tags[this.e.user_id]
+        const tag = user_tags[this.e.user_id].tag
+        const iscontinous = user_tags[this.e.user_id]["iscontinous"]
         let msg = this.e.msg
         let msgtype = this.e.message[0].type
         const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止','停止','放弃','#结束添加', '#终止添加', '#停止添加', '#放弃添加', '#终止','#停止','#放弃'];
-        if (stoplist.includes(msg)) {
+        if(iscontinous){
+            if (stoplist.includes(msg)) {
+                e.reply(`- ${tag} - 连续添加已结束`);
+                delete user_tags[e.user_id]; // 清除用户的tag
+                this.finish('addnext')
+                return;
+            }
+        }else{
+            if (stoplist.includes(msg)) {
             e.reply('已放弃本次添加');
             delete user_tags[e.user_id]; // 清除用户的tag
             this.finish('addnext')
             return;
         }
+        }
+
 
 
         //以下为image类型的消息处理
@@ -105,7 +116,10 @@ export class San_AddFace extends plugin {
 
             tool.JsonWrite(date, faceFile)
             e.reply(`${tag} 添加成功`)
+            if(!iscontinous){
+
             this.finish('addnext')
+            }
         }else{                  //image类型消息处理完毕
             let date = {}
             if (fs.existsSync(faceFile)) {
@@ -147,9 +161,13 @@ export class San_AddFace extends plugin {
 
             }
             tool.JsonWrite(date, faceFile)
-            e.reply(`${tag} 添加成功`)
+
             delete user_tags[e.user_id]; // 清除用户的tag
+            e.reply(`${tag} 添加成功`)
+            if(!iscontinous){
+
             this.finish('addnext')
+            }
         }                           
 
             
@@ -174,20 +192,27 @@ export class San_AddFace extends plugin {
         } else {
             console.log('文件夹已存在');
         }
-
+        
         /** 设置上下文，后续接收到内容会执行hei方法 */
         this.setContext('addnext');
         let msg = e.msg
-        let reg = /^#添加\s*(.*)$/;
+        let reg = /^#(批量|连续|多个|持续)?添加\s*(.*)$/;// ^#(批量|连续|多个|持续)?添加.*$
 
         let match = msg.match(reg)
+        let iscontinous = match[1] ? true : false
+        logger.info(iscontinous)
         //logger.info(match)
-        if (match[1] == '') {
+        if (match[2] == '') {
             this.finish('addnext')
             e.reply("tag禁止为空!")
             return
         } else {
-            user_tags[e.user_id] = match[1] //获取到添加tag
+            // 确保 user_tags 中有该用户的对象
+            if (!user_tags[e.user_id]) {
+                user_tags[e.user_id] = {};
+            }
+            user_tags[e.user_id]["tag"] = match[2] //获取到添加tag
+            user_tags[e.user_id]["iscontinous"] = iscontinous //获取到添加类型
             e.reply("请发送添加内容")
         }
 
