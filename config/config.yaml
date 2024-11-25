@@ -1,5 +1,5 @@
 imgQuality: 100
-add-face: closed
+add-face: open
 priority:
-  - weather: 10
+  - weather: -99999
   - LeaveMessages: 10

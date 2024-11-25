@@ -25,7 +25,7 @@ export class San_SetCfg extends plugin {
             e.reply('你不是我的主人哦')
             return false
         } 
-        let reg = /^#?(散|san|San)设置([\u4e00-\u9fa5]*)?(\d*)?$/
+        let reg = /^#?(散|san|San)设置([\u4e00-\u9fa5]*)?(-?\d*)?$/
         let str = e.msg
         const match = str.match(reg)
 
