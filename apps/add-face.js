@@ -273,7 +273,7 @@ export class San_AddFace extends plugin {
         logger.error(`isAddOpen ${isAddOnlyOpen()}`)
         
         if (!(await isAddOpen())){
-            msg = msg +`注意: 表情功能已关闭 开启-> #san设置表情添加开启 `+ "\n"
+            msg = msg +`注意: 表情添加已关闭 开启-> `+ "\n"+`#san设置表情添加开启 `+ "\n"
         }
         for (let i of keys){
             let facetag = facelist[i].list
