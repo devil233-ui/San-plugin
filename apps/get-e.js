@@ -1,4 +1,4 @@
-import common from '../../lib/common/common.js';
+import common from '../../../lib/common/common.js';
 export class gete extends plugin {
     constructor() {
         super({
