@@ -381,7 +381,7 @@ export async function makeEmoji(txt){
 }
 
 
-export async function createFolder(path) {
+export async function checkFolder(path) {
           // 检查文件夹是否存在，如果不存在则创建
           if (!fs.existsSync(path)) {
             fs.mkdir(path, {
@@ -392,4 +392,21 @@ export async function createFolder(path) {
                 }
             });
         }
+}
+
+
+
+export async function getsource(e) {
+  if (!("source" in e)){
+    return false
+}
+//logger.info(history)
+let messages
+if(e.isGroup){
+     messages = await e.group.getChatHistory(e.source.seq, 1)
+}else{
+     messages = await e.friend.getChatHistory(e.source.time, 1)
+}
+
+return messages[0]
 }

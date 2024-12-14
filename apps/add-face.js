@@ -196,8 +196,9 @@ export class San_AddFace extends plugin {
             console.log('文件夹已存在');
         }
         
-        /** 设置上下文，后续接收到内容会执行hei方法 */
-        this.setContext('addnext');
+
+
+
         let msg = e.msg
         let reg = /^#(批量|连续|多个|持续)?添加\s*(.*)$/;// ^#(批量|连续|多个|持续)?添加.*$
 
@@ -216,9 +217,17 @@ export class San_AddFace extends plugin {
             }
             user_tags[e.user_id]["tag"] = match[2] //获取到添加tag
             user_tags[e.user_id]["iscontinous"] = iscontinous //获取到添加类型
-            e.reply("请发送添加内容")
-        }
 
+        }
+        if(tool.getsource(e)){//如果存在引用消息
+            let source = await tool.getsource(e)
+            source.reply=e.reply
+            await addface(source,match[2])
+        }else{
+        /** 设置上下文，后续接收到内容会执行hei方法 */
+        this.setContext('addnext');   
+        e.reply("请发送添加内容")
+        }
     }
 
     async addswitch(e) {
@@ -508,4 +517,119 @@ export async function facereply(e){
             face["rand"] = [sendmsg.rand]           
         }
         tool.JsonWrite(obj, faceFile)
+}
+
+
+
+
+async function addface(e,tag){
+    //logger.info(e)
+    //const tag = user_tags[e.user_id].tag
+        let msg = e.msg
+        let msgtype = e.message[0].type
+
+
+
+
+        //以下为image类型的消息处理
+        if (msgtype == "image") {
+            const imgNumber = await tool.countFilesInDirectorySync(`./plugins/San-plugin/resources/face/images`)
+            //image下载至本地
+            let imageFile = `./plugins/San-plugin/resources/face/images/${imgNumber + 1}.gif`
+            let url = e.message[0].url
+            await tool.downloadImage(url, imageFile)
+
+            let date = {}
+            if (fs.existsSync(faceFile)) {
+                date = await tool.readFromJsonFile(faceFile)
+                if (date[tag] == undefined) {
+                    date[`${tag}`] = {
+
+                        'list': [{
+                            'user_id': e.user_id,
+                            'time': tool.convertTime(Date.now(), 0),
+                            'type': e.message[0].type,
+                            'url': e.message[0].url,
+                            'imageFile': imageFile,
+
+                        },
+                        ]
+                    }
+                    //判断是否存在同名tag,存在则使用初始化方法，不存在则使用push方法
+                } else {
+
+                    date[tag].list.push(
+                        {
+                            'user_id': e.user_id,
+                            'time': tool.convertTime(Date.now(), 0),
+                            'type': e.message[0].type,
+                            'url': e.message[0].url,
+                            'imageFile': imageFile,
+                        }
+                    )
+
+                }
+            } else {
+                date[`${tag}`] = {
+
+                    'list': [{
+                        'user_id': e.user_id,
+                        'time': tool.convertTime(Date.now(), 0),
+                        'type': e.message[0].type,
+                        'url': e.message[0].url,
+                        'imageFile': imageFile,
+
+                    },
+                    ]
+                }
+            }//判断是否有userface文件,若无则进行初始化
+
+            tool.JsonWrite(date, faceFile)
+            e.reply(`${tag} 添加成功`)
+        }else{                  //image类型消息处理完毕
+            let date = {}
+            if (fs.existsSync(faceFile)) {
+                date = await tool.readFromJsonFile(faceFile)
+            } else {
+                date[`${tag}`] = {
+
+                    'list': [{
+                        'user_id': e.user_id,
+                        'time': tool.convertTime(Date.now(), 0),
+                        'type': "other",
+                        'msg': e.message
+                    },
+                    ]
+                }
+            }//判断是否有userface文件,若无则进行初始化
+            if (date[tag] == undefined) {
+                date[`${tag}`] = {
+
+                    'list': [{
+                        'user_id': e.user_id,
+                        'time': tool.convertTime(Date.now(), 0),
+                        'type': "other",
+                        'msg': e.message
+                    },
+                    ]
+                }
+                //判断是否存在同名tag,存在则使用初始化方法，不存在则使用push方法
+            } else {
+
+                date[tag].list.push(
+                    {
+                        'user_id': e.user_id,
+                        'time': tool.convertTime(Date.now(), 0),
+                        'type': "other",
+                        'msg': e.message
+                    }
+                )
+
+            }
+            tool.JsonWrite(date, faceFile)
+
+            delete user_tags[e.user_id]; // 清除用户的tag
+            e.reply(`${tag} 添加成功`)
+        }                           
+
 }

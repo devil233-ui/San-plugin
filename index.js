@@ -13,7 +13,7 @@ let FolderPath = [
   `./plugins/San-plugin/resources/poke/img`,
 ]
 for(let i of FolderPath){
-  tool.createFolder(i)
+  tool.checkFolder(i)
 }
 
   async function checkDependencies() {

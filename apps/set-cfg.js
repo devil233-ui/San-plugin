@@ -1,5 +1,4 @@
 import common from '../../../lib/common/common.js';
-import config from '../../../lib/config/config.js'
 import * as tool from '../models/tool.js';
 import yaml from 'js-yaml';
 import fs from 'fs'
