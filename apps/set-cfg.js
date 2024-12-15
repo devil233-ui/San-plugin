@@ -24,7 +24,7 @@ export class San_SetCfg extends plugin {
             e.reply('你不是我的主人哦')
             return false
         }
-        let NumberReg = /^#?(散|san|San)设置([\u4e00-\u9fa5\w\s]*)?(-?\d*)?$/
+        let NumberReg = /^#?(散|san|San)设置([A-Za-z\u4e00-\u9fff]*)?(-?\d*)?$/
         let str = e.msg
         const NumberMatch = str.match(NumberReg)
             let Cfg_config = await tool.readyaml('./plugins/San-plugin/config/config.yaml')  
@@ -34,6 +34,9 @@ export class San_SetCfg extends plugin {
                 case `图像质量`:
                     Cfg_config.imgQuality = ChangeNumber ;
                     break;
+                case `优先级去背景`:
+                    Cfg_priority.removeBackground = ChangeNumber ;
+                    break; 
                 case `优先级天气`:
                     Cfg_priority.weather = ChangeNumber ;
                     break;
@@ -47,9 +50,10 @@ export class San_SetCfg extends plugin {
                     //e.reply("指令未匹配") ;
                     break;
             }
+            //logger.info(NumberMatch,ChangeNumber,NumberMatch[2],Cfg_priority,Cfg_config)
 
 
-            let ButtonReg = /^#?(散|san|San)设置([\u4e00-\u9fa5\w\s]*)?(开启|关闭)$/
+            let ButtonReg = /^#?(散|san|San)设置([A-Za-z\u4e00-\u9fff]*)?(开启|关闭)$/
             const ButtonMatch = str.match(ButtonReg)
             let ChangeButton
             let ButtonTag
@@ -98,6 +102,9 @@ export class San_SetCfg extends plugin {
                 case `优先级天气`:
                     Cfg_priority.weather = ChangeNumber ;
                     break;
+                case `优先级去背景`:
+                    Cfg_priority.removeBackground = ChangeNumber ;
+                    break;
                 case `优先级留言`:
                     Cfg_priority.LeaveMessages = ChangeNumber ;
                     break;   
@@ -135,6 +142,7 @@ export class San_SetCfg extends plugin {
             }
             let PriorityInfo = [
                 `天气：${Cfg_priority.weather}`,
+                `去背景：${Cfg_priority.removeBackground}`,
                 `留言：${Cfg_priority.LeaveMessages}`,
                 `戳一戳：${Cfg_priority.GroupPoke}`
             ]

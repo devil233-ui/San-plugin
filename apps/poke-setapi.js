@@ -19,7 +19,7 @@ export class San_PokeApi_Set extends plugin {
                     fnc: 'ApiList'
                 },
                 {
-                    reg: '^#?(散|san|San)?戳一戳(api)?(开启|关闭|)(?!.*(?:列表)).*$',
+                    reg: '^#?(散|san|San)?戳一戳(api)?(开启|关闭)(?!.*(?:列表)).*$',
                     fnc: 'SetState'
                 },
                 {
@@ -99,7 +99,7 @@ export class San_PokeApi_Set extends plugin {
         let msg = e.msg
         const reg = /^#?(散|san|San)?戳一戳api(?:api)?(开启|关闭)(.*)$/
         const match = msg.match(reg)
-        //logger.info(match)
+        logger.info(match)
         let state = match[2]
         if (match[3] == ``) {
             await e.reply(`api名为空!`)

@@ -405,8 +405,10 @@ export async function checkFolder(path) {
 /**
  * 用于获取引用消息
  * @param {Object} e - 需要处理的消息对象。
- */
-export async function getsource(e, { img } = {}) {
+ * @param {Boolean} img - 可选参数，默认为false。如果为true，则只返回消息中的图片url；如果为false或未设置，则返回整个消息对象。
+ * @return {Array/Object/Boolean} 返回source源码或图片url数组，如果消息中没有图片则返回false。
+ */ 
+export async function getsource(e, img = false) {
   let source = ""
   if (e.getReply) {
     source = await e.getReply()
@@ -417,15 +419,41 @@ export async function getsource(e, { img } = {}) {
       source = (await e.friend.getChatHistory(e.source.time, 1)).pop()
     }
   }
-  if (!source) return false
-  if (img) {
-    let imgArr = []
-    for (let i of source.message) {
-      if (i.type == "image") {
-        imgArr.push(i.url)
-      }
-    }
-    return !_.isEmpty(imgArr) && imgArr
+  if (!source) {
+      if (img) {
+          let imgArr = []
+          for (let i of e.message) {
+              if (i.type == "image") {
+              imgArr.push(i.url)
+              }
+          }
+          if(imgArr.length == 0) {
+              return false
+          }else{
+              return imgArr
+          }
+      }else{
+          return false    
+          }   
   }
+
   return source
+}
+
+
+/**
+ * 这是一个异步函数，用于检查API的可用性。
+ *
+ * @param {String} url - 需要检查的API的URL。
+ * @return {Boolean} 如果API可用，返回true；如果API不可用或在请求过程中出现错误，返回false。
+ */
+export async function checkApi(url) {
+  try {
+    const response = await fetch(url);
+    //console.log(response)
+    return response.ok; // 返回true如果状态码是200-299，否则返回false
+  } catch (error) {
+    logger.error('Error accessing the API:', error);
+    return false; // 如果有网络错误或其他异常情况，返回false
+  }
 }
