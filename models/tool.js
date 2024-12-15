@@ -381,6 +381,12 @@ export async function makeEmoji(txt){
 }
 
 
+/**
+ * 这是一个异步函数，用于检查指定路径的文件夹是否存在。如果不存在，则创建该文件夹。
+ *
+ * @param {String} path - 需要检查的文件夹路径。
+ * @return {Promise} 返回一个Promise对象
+ */
 export async function checkFolder(path) {
           // 检查文件夹是否存在，如果不存在则创建
           if (!fs.existsSync(path)) {
@@ -396,17 +402,30 @@ export async function checkFolder(path) {
 
 
 
-export async function getsource(e) {
-  if (!("source" in e)){
-    return false
-}
-//logger.info(history)
-let messages
-if(e.isGroup){
-     messages = await e.group.getChatHistory(e.source.seq, 1)
-}else{
-     messages = await e.friend.getChatHistory(e.source.time, 1)
-}
-
-return messages[0]
+/**
+ * 用于获取引用消息
+ * @param {Object} e - 需要处理的消息对象。
+ */
+export async function getsource(e, { img } = {}) {
+  let source = ""
+  if (e.getReply) {
+    source = await e.getReply()
+  } else if (e.source) {
+    if (e.group?.getChatHistory) {
+      source = (await e.group.getChatHistory(e.source.seq, 1)).pop()
+    } else if (e.friend?.getChatHistory) {
+      source = (await e.friend.getChatHistory(e.source.time, 1)).pop()
+    }
+  }
+  if (!source) return false
+  if (img) {
+    let imgArr = []
+    for (let i of source.message) {
+      if (i.type == "image") {
+        imgArr.push(i.url)
+      }
+    }
+    return !_.isEmpty(imgArr) && imgArr
+  }
+  return source
 }

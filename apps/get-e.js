@@ -9,12 +9,12 @@ export class gete extends plugin {
             rule: [
                 {
                     reg: '^#?取', 
-                    fnc: 'text'
+                    fnc: 'get'
                 }
             ]
         });
     }
-    async text(e){
+    async get(e){
         if (!("source" in e)){
             e.reply("请引用消息来获取e实例")
             return

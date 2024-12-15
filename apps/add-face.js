@@ -280,7 +280,7 @@ export class San_AddFace extends plugin {
         let keys = Object.keys(facelist)
         let msg =""
         let t =1
-        logger.error(`isAddOpen ${isAddOnlyOpen()}`)
+        //logger.error(`isAddOpen ${isAddOnlyOpen()}`)
         
         if (!(await isAddOpen())){
             msg = msg +`注意: 表情添加已关闭 开启-> `+ "\n"+`#san设置表情添加开启 `+ "\n"
@@ -338,12 +338,21 @@ export class San_AddFace extends plugin {
 
         //删除指定项
          if (!isall){
-            
-            if (!("source" in e)){
+            let source = ""
+            if (e.getReply) {
+                source = await e.getReply()
+              } else if (e.source) {
+                if (e.group?.getChatHistory) {
+                  source = (await e.group.getChatHistory(e.source.seq, 1)).pop()
+                } else if (e.friend?.getChatHistory) {
+                  source = (await e.friend.getChatHistory(e.source.time, 1)).pop()
+                }
+              }         
+            if (!source){
                 e.reply("请引用消息来删除")
                 return
             }
-            let targetRand = e.source.rand// 目标rand值
+            let targetRand = source.rand// 目标rand值
             let obj = await tool.readFromJsonFile(faceFile)
             
             let foundAndDeleted = false;
