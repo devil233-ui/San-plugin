@@ -352,7 +352,13 @@ export class San_AddFace extends plugin {
                 e.reply("请引用消息来删除")
                 return
             }
-            let targetRand = source.rand// 目标rand值
+            let targetRand
+            if(source.real_id){
+                targetRand = source.real_id// 目标rand值
+            }else if(source.rand){
+                targetRand = source.rand// 目标rand值
+
+            }
             let obj = await tool.readFromJsonFile(faceFile)
             
             let foundAndDeleted = false;
@@ -479,16 +485,23 @@ export async function facereply(e){
             sendmsg = await e.reply(segment.face(obj[msg].list[randomIndex].id))
         }//face消息处理完毕
 
+        let Rand
+        if(sendmsg.real_id){
+            Rand = sendmsg.real_id// 目标rand值
+        }else if(sendmsg.rand){
+            Rand = sendmsg.rand// 目标rand值
+        }
+
         if ("rand" in face){
             if(face["rand"].length >= 5){
                 face["rand"].shift()
-                face["rand"].push(sendmsg.rand)
+                face["rand"].push(Rand)
             }else{
-                face["rand"].push(sendmsg.rand)
+                face["rand"].push(Rand)
             }   
         }else{
 
-            face["rand"] = [sendmsg.rand]           
+            face["rand"] = [Rand]           
         }
         tool.JsonWrite(obj, faceFile)
 }
