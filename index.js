@@ -22,12 +22,13 @@ for(let i of FolderPath){
     for (let i of dependencyList) {
       try {
         await import(`${i}`);
+        //logger.info(`San-plugin: 依赖 ${i} 加载成功`);
       } catch (error) {
         logger.warn('-------San插件依赖缺失-----------');
         logger.warn(`请运行: pnpm install --filter=san-plugin`);
   
-        let msg = `San插件依赖缺失,请运行: pnpm install --filter=san-plugin`;
-        common.relpyPrivate(cfg.masterQQ[0], msg);
+        let msg = `San-plugin依赖缺失,请运行:\npnpm install --filter=san-plugin`;
+        await common.relpyPrivate(tool.masterQQ(), msg);
         logger.warn(`----------------------------`);
         return;
       }
