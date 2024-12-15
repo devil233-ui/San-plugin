@@ -12,6 +12,11 @@ export class San_ReplyFace2 extends plugin {
                     fnc: 'getText',
                     log: false,
                 },
+                {
+                    reg: '^(.*)$',
+                    fnc: 'getText',
+                    log: false,
+                },
             ]
         })
     }
