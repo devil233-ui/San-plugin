@@ -25,6 +25,10 @@ export class San_Poke extends plugin {
    async poke(e) {
         //logger.info(await isPokeOnlyOpen())
         
+        if (!(await isPokeOpen())){
+            return
+          } 
+
          if (await isPokeOnlyOpen()){
            if (e.target_id !== Bot.uin){
          return}
@@ -57,6 +61,16 @@ export class San_Poke extends plugin {
         
     }
    
+}
+//返回戳一戳功能的状态
+async function isPokeOpen() {
+    let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
+    const TorF = Cfg.poke
+    if (TorF) {
+        return true
+    }else{
+        return false
+    }
 }
 
 //返回戳一戳仅bot的状态

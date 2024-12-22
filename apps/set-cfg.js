@@ -45,7 +45,19 @@ export class San_SetCfg extends plugin {
                     break;
                 case `优先级戳一戳`:
                     Cfg_priority.GroupPoke = ChangeNumber ;
-                    break;                    
+                    break;   //----------------------------
+                case `去背景优先级`:
+                    Cfg_priority.removeBackground = ChangeNumber ;
+                    break; 
+                case `天气优先级`:
+                    Cfg_priority.weather = ChangeNumber ;
+                    break;
+                case `留言优先级`:
+                    Cfg_priority.LeaveMessages = ChangeNumber ;
+                    break;
+                case `戳一戳优先级`:
+                    Cfg_priority.GroupPoke = ChangeNumber ;
+                    break;                  
                 default:
                     //e.reply("指令未匹配") ;
                     break;
@@ -90,7 +102,10 @@ export class San_SetCfg extends plugin {
                     break;
                 case `表情添加`:
                     Cfg_config.add_face = ChangeButton ;
-                    break;                  
+                    break;
+                case `戳一戳`:
+                    Cfg_config.poke = ChangeButton ;
+                    break;                   
                 default:
                     break;
             }
@@ -135,6 +150,7 @@ export class San_SetCfg extends plugin {
                 `图像质量：${Cfg_config.imgQuality}`,
                 `表情添加：${button(Cfg_config.add_face)}`,
                 `表情添加仅主人：${button(Cfg_config.add_onlyMaster)}`,
+                `戳一戳：${button(Cfg_config.poke)}`,
                 `戳一戳仅bot：${button(Cfg_config.add_onlyBot)}`,
             ]
             for (let i of CfgInfo){
