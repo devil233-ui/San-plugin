@@ -329,7 +329,7 @@ export async function downloadImage(url, targetPath) {
     response.data.pipe(writer);
     // 监听管道完成事件
     writer.on('finish', () => {
-      logger.log(`文件已保存至 ${targetPath}`);
+      logger.info(`文件已保存至 ${targetPath}`);
     });
     // 监听错误事件
     writer.on('error', error => {
@@ -388,7 +388,7 @@ export async function makeEmoji(txt){
   // 保存修改后的图片
   const output = canvas.createJPEGStream();
    output.pipe(fs.createWriteStream(outputPath));
-  logger.log('Image with text created!');
+  logger.info('Image with text created!');
 }
 
 
@@ -410,7 +410,7 @@ export async function checkPath(targetPath) {
             // 路径有扩展名，视为文件
             try {
                 fs.writeFileSync(targetPath, '');
-                logger.log('文件已创建:', targetPath);
+                logger.info('文件已创建:', targetPath);
             } catch (writeFileErr) {
                 logger.error('创建文件失败:', writeFileErr);
             }
@@ -418,7 +418,7 @@ export async function checkPath(targetPath) {
             // 路径没有扩展名，视为目录
             try {
                 fs.mkdirSync(targetPath, { recursive: true });
-                logger.log('目录已创建:', targetPath);
+                logger.info('目录已创建:', targetPath);
             } catch (mkdirErr) {
                 logger.error('创建目录失败:', mkdirErr);
             }
