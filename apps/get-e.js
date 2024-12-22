@@ -12,7 +12,8 @@ export class gete extends plugin {
                     fnc: 'get'
                 }
             ]
-        });
+        }); 
+
     }
     async get(e){
         let source = ""

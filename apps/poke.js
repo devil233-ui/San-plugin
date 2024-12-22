@@ -1,4 +1,4 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";//忽略ssl
 import * as tool from '../models/tool.js';
 import fs from 'fs';
 const cfg_priority = await tool.set_priority("GroupPoke")

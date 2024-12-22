@@ -486,9 +486,9 @@ export async function facereply(e){
         }//face消息处理完毕
 
         let Rand
-        if(sendmsg.data.message_id){
+        if(sendmsg?.data?.message_id){
             Rand = sendmsg.data.message_id// 目标rand值
-        }else if(sendmsg.rand){
+        }else if(sendmsg?.rand){
             Rand = sendmsg.rand// 目标rand值
         }
 
