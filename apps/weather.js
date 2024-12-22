@@ -15,7 +15,12 @@ export class San_Weather extends plugin {
           reg: '^#?(.*)天气$',
           fnc: 'weather_info'
                 // 执行方法
-            }   
+            },
+            { 
+            reg: '^#?(.*)空气(质量)?$',
+            fnc: 'air_info'
+                  // 执行方法
+            }     
     ]
       })
   
@@ -39,18 +44,10 @@ export class San_Weather extends plugin {
         if(state == false){
           await locationWeather(e,match[1])
         }
-        // if(match[1] == ""){
-        //   location = "北京"
-        // }else{
-        //     location = match[1]
-        // }      
-        // // 获取对应的和风天气url
-        // let url = await tool.location_url(location)
-        // // 截取指定区域
-        // tool.screenshot(e,url,tool.clipRegion(0,110,400,700))
-      //let imgbase64 = await captureElementScreenshot("https://www.qweather.com/weather/",".c-city-warning-around")
+
+        //指定地区的天气截图
         async function locationWeather(e,location) {
-          const url = await tool.location_url(location)//网站url
+          const url = await tool.location_url(location,"weather")//网站url
           const selector = ".current-weather__bg"//选择器
           // 启动浏览器
           const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
@@ -98,7 +95,7 @@ export class San_Weather extends plugin {
       }
 
 
-      
+      //极端天气列表的截图
       async function JiduanWeather(e) {
         const url = "https://www.qweather.com/weather/"
         const selector = ".c-city-warning-around"//选择器
@@ -107,6 +104,28 @@ export class San_Weather extends plugin {
         //const browser = await puppeteer.launch({ headless: true, args: ['--disable-setuid-sandbox'] });
         // 新建一个页面
         const page = await browser.newPage();
+
+        // 设置地理位置
+        await page.setGeolocation({ latitude: 32.0500, longitude: 118.7833 }); // 北京市的经纬度
+        // 允许地理定位权限
+        await page.setBypassCSP(true); // 必须先绕过内容安全策略
+        await page.evaluateOnNewDocument(() => {
+            Object.defineProperty(navigator, 'geolocation', {
+                value: {
+                    getCurrentPosition: (success) => {
+                        success({
+                            coords: {
+                                latitude: 32.0500,
+                                longitude: 118.7833,
+                                accuracy: 100
+                            }
+                        });
+                    },
+                    watchPosition: () => {}
+                }
+            });
+        });
+
         // 设置页面大小
         await page.setViewport({ width: 600, height: 900 });
     
@@ -144,6 +163,80 @@ export class San_Weather extends plugin {
         // 关闭浏览器
         browser.close();
     }
+
+
+
+    }
+
+    async air_info (e){
+    
+      let state = false//执行状态
+      let str = e.msg
+      let reg = /^#?(.*)空气(质量)?$/
+      let match = str.match(reg)
+      //logger.error(match)
+      switch(match[1]){
+        case ``:
+          await locationAir(e,"北京")
+          state = true;
+          break;
+      }
+      if(state == false){
+        await locationAir(e,match[1])
+      }
+
+      async function locationAir(e,location){
+        const url = await tool.location_url(location,"air")//网站url
+        logger.info(url)
+        const selector = ".c-city-air-forecast"//选择器
+        // 启动浏览器
+        const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+        //const browser = await puppeteer.launch({ headless: true, args: ['--disable-setuid-sandbox'] });
+        // 新建一个页面
+        const page = await browser.newPage();
+        // 设置页面大小
+        await page.setViewport({ width: 600, height: 900 });
+    
+        // 打开HTML文件
+        await page.goto(url, { waitUntil: 'networkidle2' ,timeout: 10000});
+        
+        await page.waitForSelector(selector, { timeout: 5000 }); // 设置最大等待时间为5秒
+
+        // 获取特定容器的边界
+        // const element_1 = await page.$('.c-submenu__location'); //地区名称
+        // const boundingBox_1 = await element_1.boundingBox();
+
+        // const element_2 = await page.$(".c-city-air-current.d-flex.justify-content-between.align-items-center");//空气质量 
+        // const boundingBox_2 = await element_2.boundingBox();
+
+        // const element_3 = await page.$(".c-city-air-forecast");//空气预报
+        // const boundingBox_3 = await element_2.boundingBox();
+    
+        const clip = {
+          x: 0   ,
+          y: 60 ,
+          width: 600,
+          height: 740,
+        };
+
+        // 将页面渲染为图片并保存到本地
+        const screenshot = await page.screenshot({ clip, encoding: 'base64' });
+        await page.screenshot({
+            fullPage: false,
+            clip: clip ,// 使用传递进来的裁剪区域
+            type: 'jpeg',
+            quality: Set_Quality ,// JPEG图片的质量，范围是1到100
+            omitBackground: true, // 防止背景颜色影响透明度
+            encoding: 'base64'
+        });
+    
+        // 发送图片
+        e.reply(segment.image(`base64://${screenshot}`))
+    
+        // 关闭浏览器
+        browser.close();
+      }
+
     }
 }
 

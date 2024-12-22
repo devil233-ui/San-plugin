@@ -117,8 +117,10 @@ export function clipRegion(x, y, width, height) {
 /**
  *  生成和风天气的对应地区URL
  * @param  location 地区名称,支持中英文模糊查询
+ * @param  type 信息类型,可选: weather, air
+ * @returns 返回和风天气的对应地区URL
  */
-export async function location_url(location) {
+export async function location_url(location,type) {
     try {
         // 使用fetch方法向指定的URL发送请求，并等待响应
         const response = await fetch(`https://geoapi.qweather.com/v2/city/lookup?location=${location}&key=257d5e191bd74b9091909d3bceb9c00a`);
@@ -127,7 +129,8 @@ export async function location_url(location) {
         // 从解析后的数据中获取第一个位置的ID
         const firstLocationId = data.location[0].id;
         // 根据获取到的位置ID构造对应的天气页面URL
-        const location_url = `https://www.qweather.com/weather/${firstLocationId}.html`
+        
+        const location_url = `https://www.qweather.com/${type}/${firstLocationId}.html`
         // 返回构造好的URL
         return location_url;
     } catch (error) {
