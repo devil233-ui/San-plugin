@@ -47,7 +47,7 @@ export class San extends plugin {
 
         /** 是否需要重启 */
         if (this.isUp) {
-            await this.reply('即将执行重启，以应用更新')
+            //await this.reply('即将执行重启，以应用更新')
             setTimeout(() => this.restart(), 2000)
         }
     }
