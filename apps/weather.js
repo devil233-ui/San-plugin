@@ -1,6 +1,5 @@
 import * as tool from '../models/tool.js';
 import { getBrowserInstance } from '../models/puppeteer.js';
-import puppeteer from 'puppeteer';
 const cfg_priority = await tool.set_priority("weather")
 
 const Set_Quality = await tool.set_otherCfg(`imgQuality`)

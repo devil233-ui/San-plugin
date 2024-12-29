@@ -17,12 +17,12 @@ export class San extends plugin {
             event: 'message',
             rule: [
                 {
-                    reg: '^#(san|San|散)(强制)?更新$',
+                    reg: '^#?(san|San|散)(强制)?更新$',
                     permission: 'master',
                     fnc: 'update'
                 },
                 {
-                    reg: '^#(san|San|散)(插件)?更新日志$',
+                    reg: '^#?(san|San|散)(插件)?更新日志$',
                     fnc: 'updateLog'
                 }
             ]
@@ -47,7 +47,7 @@ export class San extends plugin {
 
         /** 是否需要重启 */
         if (this.isUp) {
-            //await this.reply('即将执行重启，以应用更新')
+            await this.reply('即将执行重启，以应用更新')
             setTimeout(() => this.restart(), 2000)
         }
     }
