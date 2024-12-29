@@ -1,5 +1,6 @@
 import * as tool from '../models/tool.js';
 import { getBrowserInstance } from '../models/puppeteer.js';
+import puppeteer from 'puppeteer';
 const cfg_priority = await tool.set_priority("weather")
 
 const Set_Quality = await tool.set_otherCfg(`imgQuality`)
@@ -17,7 +18,7 @@ export class San_Weather extends plugin {
                 // 执行方法
             },
             { 
-            reg: '^#?(.*)空气(质量)?$',
+            reg: '^#?(.*)空气(质量)?(排行)?$',
             fnc: 'air_info'
                   // 执行方法
             }     
@@ -174,18 +175,34 @@ export class San_Weather extends plugin {
     
       let state = false//执行状态
       let str = e.msg
-      let reg = /^#?(.*)空气(质量)?$/
+      let reg = /^#?(.*)空气(质量)?(排行)?$/
       let match = str.match(reg)
       //logger.error(match)
+
+if(match[3] == ``){
       switch(match[1]){
         case ``:
           await locationAir(e,"北京")
           state = true;
           break;
-      }
-      if(state == false){
-        await locationAir(e,match[1])
-      }
+        default:
+          await locationAir(e,match[1])
+          state = true;
+          break;
+      }  
+}else{
+  switch(match[1]){
+    case ``:
+      await AirRank(e,"北京")
+      state = true;
+      break;
+    default:
+      await AirRank(e,match[1])
+      state = true;
+      break;
+  } 
+
+}
 
       async function locationAir(e,location){
         const url = await tool.location_url(location,"air")//网站url
@@ -239,7 +256,60 @@ export class San_Weather extends plugin {
         // 关闭页面
       await page.close();
       }
+      
 
+      async function AirRank(e,location){
+        const url = await tool.location_url(location,"air")//网站url
+        logger.info(url)
+        const selector = ".c-city-air-rank"//选择器
+        // 启动浏览器
+        const browser = await getBrowserInstance();
+        //const browser = await puppeteer.launch({ headless: true, args: ['--disable-setuid-sandbox'] });
+        // 新建一个页面
+        const page = await browser.newPage();
+        // 设置页面大小
+        await page.setViewport({ width: 600, height: 900 });
+    
+        // 打开HTML文件
+        await page.goto(url, { waitUntil: 'networkidle2' ,timeout: 10000});
+        
+        await page.waitForSelector(selector, { timeout: 5000 }); // 设置最大等待时间为5秒
+
+        //获取特定容器的边界
+        const element_1 = await page.$('.c-city-air-rank'); //地区名称
+        const boundingBox_1 = await element_1.boundingBox();
+
+        // const element_2 = await page.$(".c-city-air-current.d-flex.justify-content-between.align-items-center");//空气质量 
+        // const boundingBox_2 = await element_2.boundingBox();
+
+        // const element_3 = await page.$(".c-city-air-forecast");//空气预报
+        // const boundingBox_3 = await element_2.boundingBox();
+    
+        const clip = {
+          x: boundingBox_1.x   ,
+          y: boundingBox_1.y ,
+          width: boundingBox_1.width,
+          height: boundingBox_1.height,
+        };
+
+        // 将页面渲染为图片并保存到本地
+        const screenshot = await page.screenshot({ clip, encoding: 'base64' });
+        await page.screenshot({
+            fullPage: false,
+            clip: clip ,// 使用传递进来的裁剪区域
+            type: 'jpeg',
+            quality: Set_Quality ,// JPEG图片的质量，范围是1到100
+            omitBackground: true, // 防止背景颜色影响透明度
+            encoding: 'base64'
+        });
+    
+        // 发送图片
+        e.reply(segment.image(`base64://${screenshot}`))
+    
+        
+        // 关闭页面
+      await page.close();
+      }
     }
 }
 
