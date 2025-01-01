@@ -1,7 +1,6 @@
 import * as tool from '../models/tool.js';
 import { getBrowserInstance } from '../models/puppeteer.js';
 const cfg_priority = await tool.set_priority("weather")
-
 export class San_Weather extends plugin {
     constructor () {
       super({
@@ -74,17 +73,15 @@ export class San_Weather extends plugin {
             width: boundingBox_2.width + 15,
             height: (boundingBox_2.height + boundingBox_1.height + 60),
           };
-
-          // 将页面渲染为图片并保存到本地
-          const screenshot = await page.screenshot({ clip, encoding: 'base64' });
-          await page.screenshot({
-              fullPage: false,
-              clip: clip ,// 使用传递进来的裁剪区域
-              type: 'jpeg',
-              quality: await tool.set_otherCfg(`imgQuality`) ,// JPEG图片的质量，范围是1到100
-              omitBackground: true, // 防止背景颜色影响透明度
-              encoding: 'base64'
-          });
+         
+       // 将页面渲染为图片并保存到本地
+        const screenshotOptions = {
+            clip,
+            encoding: 'base64',
+            type: 'jpeg',
+            quality: await tool.set_otherCfg(`imgQuality`), // 设置图片质量范围是1到100
+        };
+        const screenshot = await page.screenshot(screenshotOptions);
       
           // 发送图片
           e.reply(segment.image(`base64://${screenshot}`))
@@ -145,18 +142,16 @@ export class San_Weather extends plugin {
           width: boundingBox_1.width ,
           height: boundingBox_1.height,
         };
-
-        // 将页面渲染为图片并保存到本地
-        const screenshot = await page.screenshot({ clip, encoding: 'base64' });
-        await page.screenshot({
-            fullPage: false,
-            clip: clip ,// 使用传递进来的裁剪区域
+        
+       
+       // 将页面渲染为图片并保存到本地
+        const screenshotOptions = {
+            clip,
+            encoding: 'base64',
             type: 'jpeg',
-            quality: await tool.set_otherCfg(`imgQuality`) ,// JPEG图片的质量，范围是1到100
-            omitBackground: true, // 防止背景颜色影响透明度
-            encoding: 'base64'
-        });
-    
+            quality: await tool.set_otherCfg(`imgQuality`), // 设置图片质量范围是1到100
+        };
+        const screenshot = await page.screenshot(screenshotOptions);
         // 发送图片
         e.reply(segment.image(`base64://${screenshot}`))
     
@@ -235,17 +230,16 @@ if(match[3] === undefined){
           width: 600,
           height: 1250,
         };
-
-        // 将页面渲染为图片并保存到本地
-        const screenshot = await page.screenshot({ clip, encoding: 'base64' });
-        await page.screenshot({
-            fullPage: false,
-            clip: clip ,// 使用传递进来的裁剪区域
+        
+      // logger.info(imgquality)
+       // 将页面渲染为图片并保存到本地
+        const screenshotOptions = {
+            clip,
+            encoding: 'base64',
             type: 'jpeg',
-            quality: await tool.set_otherCfg(`imgQuality`) ,// JPEG图片的质量，范围是1到100
-            omitBackground: true, // 防止背景颜色影响透明度
-            encoding: 'base64'
-        });
+            quality: await tool.set_otherCfg(`imgQuality`), // 设置图片质量范围是1到100
+        };
+        const screenshot = await page.screenshot(screenshotOptions);
     
         // 发送图片
         e.reply(segment.image(`base64://${screenshot}`))
@@ -289,18 +283,16 @@ if(match[3] === undefined){
           width: boundingBox_1.width,
           height: boundingBox_1.height,
         };
-
-        // 将页面渲染为图片并保存到本地
-        const screenshot = await page.screenshot({ clip, encoding: 'base64' });
-        await page.screenshot({
-            fullPage: false,
-            clip: clip ,// 使用传递进来的裁剪区域
+        
+       
+       // 将页面渲染为图片并保存到本地
+        const screenshotOptions = {
+            clip,
+            encoding: 'base64',
             type: 'jpeg',
-            quality: await tool.set_otherCfg(`imgQuality`) ,// JPEG图片的质量，范围是1到100
-            omitBackground: true, // 防止背景颜色影响透明度
-            encoding: 'base64'
-        });
-    
+            quality: await tool.set_otherCfg(`imgQuality`), // 设置图片质量范围是1到100
+        };
+        const screenshot = await page.screenshot(screenshotOptions);
         // 发送图片
         e.reply(segment.image(`base64://${screenshot}`))
     

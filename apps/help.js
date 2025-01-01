@@ -48,7 +48,7 @@ export class gete extends plugin {
             clip,
             encoding: 'base64',
             type: 'jpeg',
-            quality: Set_Quality, // 设置图片质量范围是1到100
+            quality: await tool.set_otherCfg(`imgQuality`), // 设置图片质量范围是1到100
         };
         const screenshot = await page.screenshot(screenshotOptions);
 
