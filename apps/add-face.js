@@ -20,7 +20,7 @@ export class San_AddFace extends plugin {
                     // 执行方法
                 },
                 {
-                    reg: '#表情列表$',
+                    reg: '#?(散|san|San)?表情列表$',
                     fnc: 'facelist'
                 },
                 {
