@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer';
 import axios from 'axios';
 import common from '../../../lib/common/common.js';
 import config from '../../../lib/config/config.js'
-
+import { stat, writeFile, mkdir, readFile } from 'fs/promises';
 /**
  * 获取主人qq号
  * 返回number 类型
@@ -282,27 +282,28 @@ export function JsonWrite(obj, filePath) {
  * @return {Promise<Object>} 返回一个Promise对象，该对象在成功时解析为从JSON文件中读取并解析的对象，失败时则抛出错误。
  */
 export async function readFromJsonFile(filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        logger.error('json文件读取:', err);
-        reject(err);
-        return;
-      }
-      if (data === '') {
-        logger.warn('json文件为空');
-        resolve({}); // 或者你可以选择reject一个新的错误
-        return;
-      }
-      try {
-        const obj = JSON.parse(data);
-        resolve(obj);
-      } catch (parseErr) {
-        logger.error('json转换错误:', parseErr);
-        reject(parseErr);
-      }
-    });
-  });
+  try {
+    // 读取文件内容
+    const data = await readFile(filePath, 'utf8');
+    
+    if (data === '') {
+      logger.warn('json文件为空');
+      return {}; // 或者你可以选择抛出一个新的错误
+    }
+
+    // 解析JSON数据
+    const obj = JSON.parse(data);
+    return obj;
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      logger.error('json文件不存在:', err);
+    } else if (err instanceof SyntaxError) {
+      logger.error('json转换错误:', err);
+    } else {
+      logger.error('读取json文件时发生错误:', err);
+    }
+    throw err; // 将错误传递给调用者
+  }
 }
 
 
@@ -399,34 +400,38 @@ export async function makeEmoji(txt){
  * @return {Promise} 返回一个Promise对象
  */
 
+
 export async function checkPath(targetPath) {
   try {
     // 获取文件或目录的状态信息
-    fs.statSync(targetPath);
-} catch (err) {
+    await stat(targetPath);
+  } catch (err) {
     if (err.code === 'ENOENT') {
-        // 如果路径不存在，判断是文件还是目录
-        if (path.extname(targetPath)) {
-            // 路径有扩展名，视为文件
-            try {
-                fs.writeFileSync(targetPath, '');
-                logger.info('文件已创建:', targetPath);
-            } catch (writeFileErr) {
-                logger.error('创建文件失败:', writeFileErr);
-            }
-        } else {
-            // 路径没有扩展名，视为目录
-            try {
-                fs.mkdirSync(targetPath, { recursive: true });
-                logger.info('目录已创建:', targetPath);
-            } catch (mkdirErr) {
-                logger.error('创建目录失败:', mkdirErr);
-            }
+      // 如果路径不存在，判断是文件还是目录
+      if (path.extname(targetPath)) {
+        // 路径有扩展名，视为文件
+        const dir = path.dirname(targetPath);
+        try {
+          // 确保文件所在的目录存在
+          await mkdir(dir, { recursive: true });
+          await writeFile(targetPath, '');
+          logger.info('文件已创建:', targetPath); 
+        } catch (writeFileErr) {
+          logger.error('创建文件失败:', writeFileErr); 
         }
+      } else {
+        // 路径没有扩展名，视为目录
+        try {
+          await mkdir(targetPath, { recursive: true });
+          logger.info('目录已创建:', targetPath); 
+        } catch (mkdirErr) {
+          logger.error('创建目录失败:', mkdirErr); 
+        }
+      }
     } else {
-        logger.error('获取状态失败:', err);
+      logger.error('获取状态失败:', err); 
     }
-}
+  }
 }
 
 

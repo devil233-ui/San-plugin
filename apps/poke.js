@@ -24,15 +24,26 @@ export class San_Poke extends plugin {
 
    async poke(e) {
         //logger.info(await isPokeOnlyOpen())
-        
+
+        //判断 戳一戳功能 有无开启
         if (!(await isPokeOpen())){
             return
           } 
-
-         if (await isPokeOnlyOpen()){
-           if (e.target_id !== Bot.uin){
-         return}
-         }  
+        //判断 戳一戳仅bot 是否开启
+        if (await isPokeOnlyOpen()) {
+            // 检查 Bot.uin 是否为数组
+            if (Array.isArray(Bot.uin)) {
+                // 如果是数组，则检查 e.target_id 是否在 Bot.uin 数组中
+                if (!Bot.uin.includes(e.target_id)) {
+                    return;
+                }
+            } else {
+                // 如果不是数组，则直接比较 e.target_id 和 Bot.uin
+                if (e.target_id !== Bot.uin) {
+                    return;
+                }
+            }
+        }
          
             if(!fs.existsSync(`./plugins/San-plugin/resources/poke/api.yaml`)){
             let random = Math.floor(Math.random() * DefaultApi.length)
