@@ -11,18 +11,23 @@ export class San_PokeApi_Set extends plugin {
             priority: -111,//执行优先级：数值越低越6
             rule: [
                 {
-                    reg: '^#?(散|san|San)?戳一戳api(设置|添加).*$',
+                    reg: '^#?(散|san|San)?戳一戳(?:api)?(设置|添加).*$',
                     fnc: 'SetApi',
                     permission: 'master'
                 },
                 {
-                    reg: '^#?(散|san|San)?戳一戳api(开启|关闭|全部)?列表$',
+                    reg: '^#?(散|san|San)?戳一戳(?:api)?(开启|关闭|全部)?列表$',
                     fnc: 'ApiList',
                     permission: 'master'
                 },
                 {
-                    reg: '^#?(散|san|San)?戳一戳api全部删除$',
+                    reg: '^#?(散|san|San)?戳一戳(?:api)?全部删除$',
                     fnc: 'alldel',
+                    permission: 'master'
+                },
+                {
+                    reg: '^#?(散|san|San)?戳一戳(?:api)?删除(.*)$',
+                    fnc: 'DelOne',
                     permission: 'master'
                 },
                 {
@@ -41,7 +46,7 @@ export class San_PokeApi_Set extends plugin {
 
    async SetApi(e) {
     try {
-        const reg = /^#?(散|san|San)?戳一戳api(添加|设置)([^\s]+)[\s,+：]+(.+)$/
+        const reg = /^#?(散|san|San)?戳一戳(?:api)?(添加|设置)([^\s]+)[\s,+：]+(.+)$/
     let msg = e.msg;
     const match = msg.match(reg)
     const name = match[3];
@@ -73,7 +78,7 @@ export class San_PokeApi_Set extends plugin {
 
     async ApiList(e) {
         let msg = e.msg
-        const reg = /^#?(散|san|San)?戳一戳api(开启|关闭|全部)?列表$/
+        const reg = /^#?(散|san|San)?戳一戳(?:api)?(开启|关闭|全部)?列表$/
         const match = msg.match(reg)
         //logger.info(match)
         let tag = '全部'
@@ -132,7 +137,7 @@ export class San_PokeApi_Set extends plugin {
   
         async SetAll(e) {
             let msg = e.msg
-            const reg = /^#?(散|san|San)?戳一戳api全部(开启|关闭)$/
+            const reg = /^#?(散|san|San)?戳一戳(?:api)?全部(开启|关闭)$/
             const match = msg.match(reg)
             let state = match[2]
             let apilist = await tool.readyaml('./plugins/San-plugin/resources/poke/api.yaml')
@@ -150,6 +155,25 @@ export class San_PokeApi_Set extends plugin {
             }
             tool.objectToYamlFile(apilist,'./plugins/San-plugin/resources/poke/api.yaml')
             e.reply(`戳一戳api已全部${state}`)
+        }
+
+        async DelOne(e){
+            let msg = e.msg
+            const reg = /^#?(散|san|San)?戳一戳(?:api)?删除(.*)$/
+            const match = msg.match(reg)
+            if(match[2] == ""){
+                e.reply("api名为空!")
+                return
+            }
+            let apilist = await tool.readyaml('./plugins/San-plugin/resources/poke/api.yaml')
+            if(Object.keys(apilist).includes(match[2])){
+                delete apilist[match[2]]
+                tool.objectToYamlFile(apilist,'./plugins/San-plugin/resources/poke/api.yaml')
+                e.reply(`api -${match[2]}- 已删除`)
+            }else{
+                e.reply(`api -${match[2]}- 不存在!`)
+                return
+            }
         }
         
         async alldel(e){
@@ -174,7 +198,7 @@ export class San_PokeApi_Set extends plugin {
             break;
     }
     const indentedString = `
-- ${name}: 
+- ${name} - 
     api: ${url}
     状态: ${isopen}
 `
