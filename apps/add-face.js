@@ -70,7 +70,7 @@ export class San_AddFace extends plugin {
         if (msgtype == "image") {
             const imgNumber = await tool.countFilesInDirectorySync(`./plugins/San-plugin/resources/face/images`)
             //image下载至本地
-            let imageFile = `./plugins/San-plugin/resources/face/images/${imgNumber + 1}.gif`
+            let imageFile = `./plugins/San-plugin/resources/face/images/${tool.getId()}.gif`
             let url = this.e.message[0].url
             await tool.downloadImage(url, imageFile)
 
@@ -334,6 +334,18 @@ export class San_AddFace extends plugin {
         //删除全部项
         if (isall){
             //logger.info(facelist)
+            for (let i of facelist[facetag].list ){
+                logger.info(i)
+                if(i?.imageFile){
+                    logger.info(i.imageFile)
+                    try {
+                        fs.unlinkSync(i.imageFile)
+                    } catch (error) {
+                        logger.error(error)
+                    }
+                    
+                }
+            }
             delete facelist[facetag]
             //logger.info(facelist)
             await tool.JsonWrite(facelist,faceFile)
@@ -376,6 +388,14 @@ export class San_AddFace extends plugin {
                 const newList = obj[key].list.filter(item => {
                   if (item.rand && item.rand.includes(targetRand)) {
                     foundAndDeleted = true;
+                    if(item?.imageFile){
+                        //logger.info(item.imageFile)
+                        try {
+                            fs.unlinkSync(item.imageFile)
+                        } catch (error) {
+                            logger.error(error)
+                        }    
+                    }
                     return false;
                   }
                   return true;

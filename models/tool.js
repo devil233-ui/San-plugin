@@ -507,3 +507,14 @@ export async function checkApi(url) {
     return false; // 如果有网络错误或其他异常情况，返回false
   }
 }
+
+export function getId() {
+  // 获取当前时间戳，并转换为36进制字符串
+  const timePart = Date.now().toString(36);
+  
+  // 生成一个随机数，去掉前面的'0.'并转换为36进制字符串
+  const randomPart = Math.random().toString(36).substr(2, 5); // 取前5位作为示例
+  
+  // 将两部分组合起来形成最终的唯一ID
+  return timePart + randomPart;
+}
