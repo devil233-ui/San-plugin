@@ -95,6 +95,6 @@ QQ: 3126986875
 
 玩原神的原友可以来这里,此群不接受讨论Bot
 
-作者的原神交流群：[518062670](https://qm.qq.com/q/1IEwBEgSSQ)  
+作者的原神交流群：[784393804](https://qm.qq.com/q/QefWwUqUko)  
 
 
