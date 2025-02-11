@@ -1,7 +1,6 @@
 import * as tool from '../models/tool.js';
 import fs from 'fs';
 import yaml from 'js-yaml';
-import path from 'path';
 import common from '../../../lib/common/common.js';
 let user_tags = {}//用作中转变量
 let laidianNub = 10 //来点表情 的发送表情数量(聊天记录形式)
@@ -436,6 +435,7 @@ export class San_AddFace extends plugin {
 
     async laidian(e){
         // laidianNub默认值定义在代码顶部 默认为10
+        let sendNub = laidianNub
         let code = undefined
         let atteptCount = 0
         while(atteptCount < maxAttempts && code === undefined){
@@ -449,9 +449,9 @@ export class San_AddFace extends plugin {
             let obj = await tool.readFromJsonFile(faceFile)
             //logger.info(obj)
             let facelist = obj[match[2]].list
-            if(facelist.length < 10){laidianNub = facelist.length}
+            if(facelist.length < 10){sendNub = facelist.length}
             let replymsg = []
-            for(let i = 0; i < laidianNub; i++){
+            for(let i = 0; i < sendNub; i++){
                 const randomIndex = Math.floor(Math.random() * facelist.length);
                 let face = facelist.splice(randomIndex, 1)[0]; // 移除并返回该元素
                 const matchType = face.type
