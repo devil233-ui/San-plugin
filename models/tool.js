@@ -151,7 +151,7 @@ export async function readyaml(filePath) {
   try {
     const data = await fs.readFile(filePath, 'utf8');
     if (data.trim() === '') {
-      logger.warn('yaml文件为空');
+      //logger.warn('yaml文件为空');
       return {}; // 返回一个空对象
     }
     return yaml.load(data);
@@ -160,9 +160,6 @@ export async function readyaml(filePath) {
     throw err; // 抛出错误以便调用者处理
   }
 }
-
-
-
 
 
   /**

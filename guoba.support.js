@@ -130,12 +130,67 @@ export function supportGuoba () {
                 placeholder: '请输入优先级'
             }
         },
+        {
+            label: '戳一戳配置',
+            // 第三个分组标记开始
+            component: 'SOFT_GROUP_BEGIN'
+        },
+        {
+            field: "poke.List",
+            label: "戳一戳列表",
+            bottomHelpMessage: "戳一戳列表",
+            component: "GSubForm",
+            componentProps: {
+              multiple: true,
+              schemas: [
+                {
+                    field: 'name',
+                    label: 'api名称',
+                    bottomHelpMessage: '请自定义该api名称',
+                    component: 'Input',
+                    required: true,
+                    componentProps: {
+                        placeholder: '请自定义该api名称'
+                    }
+                },
+                {
+                    field: 'api',
+                    label: 'api的url',
+                    bottomHelpMessage: '请确保api可用,任意图片api均可',
+                    component: 'Input',
+                    required: true,
+                    componentProps: {
+                        placeholder: '请输入该api的url'
+                    }
+                },
+                {
+                    field: 'isopen',
+                    label: '是否开启',
+                    bottomHelpMessage: '注意当多个开启时会随机选择已开启的api',
+                    component: 'Switch'
+                },
+              ]
+            }
+          }
       ],
       // 获取配置数据方法（用于前端填充显示数据）
       async getConfigData () {
         let data = {
             config: await tool.readyaml('./plugins/San-plugin/config/config.yaml') ,
             priority: await tool.readyaml('./plugins/San-plugin/config/priority.yaml') ,
+            poke: {
+                List: []
+            }
+        }
+        let pokeapi = await tool.readyaml('./plugins/San-plugin/resources/poke/api.yaml')
+        //logger.info(pokeapi)
+        let list = data.poke.List
+        for(let key in pokeapi){
+            list.push({
+                name: key,
+                api: pokeapi[key].api,
+                isopen: pokeapi[key].isopen
+            })
         }
         //logger.info(data)
         return data
@@ -145,18 +200,26 @@ export function supportGuoba () {
         //logger.info(data)
         // 将 newData 转换为嵌套对象
         let NewData = {};
-        for (let [keyPath, value] of Object.entries(data)) {
-            //logger.info([keyPath, value])
-            if (keyPath === 'config.imgQuality' || keyPath.startsWith('priority.')) {
-                value = Number(value); // 尝试转换为数字
-              }
-            lodash.set(NewData, keyPath, value);
 
+        for(let key in data){
+            if (key === 'config.imgQuality' || key.startsWith('priority.')) {
+                data[key] = Number(data[key]); // 尝试转换为数字
+              }
+            lodash.set(NewData, key, data[key])
         }
-        //logger.info(NewData)
+        //logger.info(JSON.stringify(NewData,null,2))//直接打印会简化显示嵌套对象如[Object]
+        let pokeList = NewData.poke.List
+        let pokeData = {}
+        for (let i of pokeList){
+            let name = i[`name`]
+            delete i[`name`]
+            pokeData[name] = i
+        }
+        //logger.info(JSON.stringify(pokeData,null,2))
         try {
             tool.objectToYamlFile(NewData.config,'./plugins/San-plugin/config/config.yaml')
             tool.objectToYamlFile(NewData.priority,'./plugins/San-plugin/config/priority.yaml')
+            tool.objectToYamlFile(pokeData,'./plugins/San-plugin/resources/poke/api.yaml')
             return Result.ok({}, '保存成功~')    
         } catch (error) {
             logger.error(error)
