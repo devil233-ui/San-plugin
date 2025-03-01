@@ -409,9 +409,19 @@ export async function facereply(e){
             logger.info(`San-plugin表情回复 匹配到 ${msg}`)
             //logger.info(msgtype)
         } else {
-            //logger.info(`San-plugin 未匹配到 ${msg}`)
-            //logger.info(e)
-            return
+            //兼容#开头字段 补充判断
+            let reg = /^#(.*)$/;
+            //logger.info(msg)
+            if (!msg) { return } //排除非字符串消息
+            let match = msg.match(reg)
+            if (!match) { return }
+            if (keys.includes(match[1])) {
+                msg = match[1]
+                logger.info(`San-plugin表情回复 匹配到 ${msg}`)
+ 
+            }else{
+                return
+            }
         }
         //const randomIndex = Math.floor(Math.random() * obj[msg].list.length);
         // 重复进行两次随机操作，直到两次随机结果相同
