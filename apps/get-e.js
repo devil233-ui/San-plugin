@@ -8,7 +8,7 @@ export class gete extends plugin {
             priority: 10000,
             rule: [
                 {
-                    reg: '^#?取', 
+                    reg: '^#?取$', 
                     fnc: 'get'
                 }
             ]
@@ -30,6 +30,9 @@ export class gete extends plugin {
             e.reply("请引用消息来获取e实例")
             return
         }
+        
+BigIntToString(source)
+    
         let messages = source 
             const jsonString = JSON.stringify(messages, null, 2);
             const msgjsonString = JSON.stringify(messages.message, null, 2);
@@ -37,4 +40,16 @@ export class gete extends plugin {
             e.reply(makeForwardMsg)
     }
     
+}
+
+
+// 在序列化前遍历对象，将BigInt转为字符串
+function BigIntToString(obj) {
+  for (let key in obj) {
+    if (typeof obj[key] === 'bigint') {
+      obj[key] = obj[key].toString();
+    } else if (typeof obj[key] === 'object') {
+      BigIntToString(obj[key]);
+    }
+  }
 }

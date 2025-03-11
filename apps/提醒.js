@@ -7,7 +7,7 @@ export class news extends plugin {
             name: '提醒',
             dsc: '提醒',
             event: 'message',
-            priority: -50,
+            priority: 5000,
             rule: [
                 {
                     reg: '^#(.*)提醒(.*)$',
