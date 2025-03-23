@@ -131,6 +131,16 @@ export function supportGuoba () {
             }
         },
         {
+            field: 'priority.get_e',
+            label: '取e实例',
+            bottomHelpMessage: '`取`,优先级越小越优先,可为负值,重启后生效',
+            component: 'Input',
+            required: true,
+            componentProps: {
+                placeholder: '请输入优先级'
+            }
+        },
+        {
             label: '戳一戳配置',
             // 第三个分组标记开始
             component: 'SOFT_GROUP_BEGIN'

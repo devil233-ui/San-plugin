@@ -53,7 +53,10 @@ export class San_SetCfg extends plugin {
                     break;
                 case `优先级戳一戳`:
                     Cfg_priority.GroupPoke = ChangeNumber ;
-                    break;   //----------------------------
+                    break;
+                case `优先级取`:
+                    Cfg_priority.get_e = ChangeNumber ;
+                    break;//----------------------------
                 case `去背景优先级`:
                     Cfg_priority.removeBackground = ChangeNumber ;
                     break; 
@@ -65,7 +68,10 @@ export class San_SetCfg extends plugin {
                     break;
                 case `戳一戳优先级`:
                     Cfg_priority.GroupPoke = ChangeNumber ;
-                    break;                  
+                    break;
+                case `取优先级`:
+                    Cfg_priority.get_e = ChangeNumber ;
+                    break;
                 default:
                     //e.reply("指令未匹配") ;
                     break;
@@ -169,7 +175,8 @@ export class San_SetCfg extends plugin {
                 `天气：${Cfg_priority.weather}`,
                 `去背景：${Cfg_priority.removeBackground}`,
                 `留言：${Cfg_priority.LeaveMessages}`,
-                `戳一戳：${Cfg_priority.GroupPoke}`
+                `戳一戳：${Cfg_priority.GroupPoke}`,
+                `取：${Cfg_priority.get_e}`,
             ]
             const PriorityMsg = await common.makeForwardMsg(e, PriorityInfo, '优先级信息')
             sendMsg.push(PriorityMsg)
