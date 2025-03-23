@@ -1,11 +1,12 @@
 import common from '../../../lib/common/common.js';
+const cfg_priority = await tool.set_priority("get_e")
 export class gete extends plugin {
     constructor() {
         super({
             name: 'get-e',
             dsc: '获取e实例',
             event: 'message',
-            priority: 10000,
+            priority: cfg_priority,
             rule: [
                 {
                     reg: '^#?取$', 
