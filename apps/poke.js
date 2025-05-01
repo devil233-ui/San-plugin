@@ -67,7 +67,10 @@ export class San_Poke extends plugin {
         }
         let random = Math.floor(Math.random() * randomlist.length)
         let url = randomlist[random]
-
+        if(await tool.checkApi(url)){
+            e.reply("连接api服务器失败",{recallMsg : 4});
+            return fasle
+        }
         e.reply(segment.image(url));
         
     }

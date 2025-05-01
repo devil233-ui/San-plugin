@@ -136,8 +136,8 @@ export class San_AddFace extends plugin {
         //logger.info(match)
         const state = match[2]
         if (state == "开启") {
-            let url = 'https://sanluo.icu:11111/down/RdDzehzqewKw.js'
-            await tool.downloadImage(url, "node_modules/icqq/lib/message/parser.js")
+            // let url = 'https://sanluo.icu:11111/down/RdDzehzqewKw.js'
+            // await tool.downloadImage(url, "node_modules/icqq/lib/message/parser.js")
             let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
             Cfg.add_face = true
             const updateCfg = yaml.dump(Cfg);
@@ -169,7 +169,7 @@ export class San_AddFace extends plugin {
 
 
     async facelist(e){
-        let facelist = await tool.readFromJsonFile(faceFile)
+        let facelist = await getFaceData()
         let keys = Object.keys(facelist)
         let msg =""
         let t =1
@@ -198,7 +198,7 @@ export class San_AddFace extends plugin {
         //logger.info(match)
         let isall = match[3] ? true : false
         let facetag = match[4]//tag名  没有时为 ''
-        let facelist = await tool.readFromJsonFile(faceFile)
+        let facelist = await getFaceData()
         let keys = Object.keys(facelist)
 
             if(isall){
@@ -371,6 +371,8 @@ export class San_AddFace extends plugin {
     
 // })
 
+
+//****以下为相关方法****\\
 //返回表情添加的状态
 async function isAddOpen() {
     let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
@@ -528,4 +530,9 @@ async function HandelFace(e,tag) {
 
     e.reply(`- ${tag} -添加成功`)
 
+}
+
+async function getFaceData(e) {
+    const data = await tool.readFromJsonFile(faceFile)
+    return data
 }
