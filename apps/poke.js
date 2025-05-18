@@ -1,6 +1,8 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";//忽略ssl
 import * as tool from '../models/tool.js';
 import fs from 'fs';
+import axios from 'axios';
+import https from 'https';
 const cfg_priority = await tool.set_priority("GroupPoke")
 //如果用户没有自定义api则使用默认api
 const DefaultApi =[
@@ -67,14 +69,30 @@ export class San_Poke extends plugin {
         }
         let random = Math.floor(Math.random() * randomlist.length)
         let url = randomlist[random]
-        if(!(await tool.checkApi(url))){
+        if(!(await tool.checkApi(url,3000))){
             let msg = await e.reply("连接api服务器失败");
             setTimeout(() => {
                 e.group.recallMsg(msg.seq,msg.rand)
             }, 4000);
             return false
         }
-        e.reply(segment.image(url));
+        let base64
+        try {
+            
+            const agent = new https.Agent({ rejectUnauthorized: false })
+            // 获取图片数据（responseType 设为 'arraybuffer'）
+            const response = await axios.get(url, {
+              responseType: 'arraybuffer',
+              httpsAgent: agent,
+            });
+        
+            // 将二进制数据转为 Base64
+            base64 = Buffer.from(response.data, 'binary').toString('base64');
+          } catch (error) {
+            console.error('Error converting image to Base64:', error);
+            throw error;
+          }
+        e.reply(segment.image(`base64://${base64}`));
         
     }
    

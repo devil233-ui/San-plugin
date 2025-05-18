@@ -492,16 +492,28 @@ export async function getsource(e, img = false) {
  * 这是一个异步函数，用于检查API的可用性。
  *
  * @param {String} url - 需要检查的API的URL。
+ * @param {number} [timeout=5000] - 请求的超时时间，默认为5000毫秒
  * @return {Boolean} 如果API可用，返回true；如果API不可用或在请求过程中出现错误，返回false。
  */
-export async function checkApi(url) {
+export async function checkApi(url, timeout = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   try {
-    const response = await fetch(url);
-    //logger.log(response)
-    return response.ok; // 返回true如果状态码是200-299，否则返回false
+    const response = await fetch(url, {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId); // 清除超时定时器
+    return response.ok;
   } catch (error) {
-    logger.error('Error accessing the API:', error);
-    return false; // 如果有网络错误或其他异常情况，返回false
+    if (error.name === 'AbortError') {
+      logger.error('Request timed out');
+    } else {
+      logger.error('Error accessing the API:', error);
+    }
+    return false;
+  } finally {
+    clearTimeout(timeoutId); // 确保无论如何都清除定时器
   }
 }
 

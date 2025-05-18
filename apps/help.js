@@ -27,7 +27,11 @@ export class gete extends plugin {
         // 新建一个页面
         const page = await browser.newPage();
         // 设置页面大小
-        await page.setViewport({ width: 800, height: 1000 });
+        await page.setViewport({
+             width: 800, 
+             height: 1000 ,
+             deviceScaleFactor: 2, // 关键参数，2 倍高清
+            });
 
         // 打开HTML文件
         await page.goto(htmlPath);
