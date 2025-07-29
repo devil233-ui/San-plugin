@@ -32,6 +32,19 @@ const ensureDir = (dir) => {
   }
 };
 
+// 初始化空的userface.json文件
+const initUserFaceFile = async () => {
+  try {
+    if (!fsS.existsSync(config.new.userFace)) {
+      await tool.JsonWrite({}, config.new.userFace);
+      logger.info(`已创建初始 userface.json 文件: ${config.new.userFace}`);
+    }
+  } catch (error) {
+    logger.error('初始化userface.json失败:', error);
+    throw error;
+  }
+};
+
 // 递归删除目录
 const deleteFolderRecursive = (dirPath) => {
   if (fsS.existsSync(dirPath)) {
@@ -152,6 +165,9 @@ const initFileSystem = async () => {
     // 确保新目录结构
     ensureDir(config.new.faceDir);
     ensureDir(config.new.imagesDir);
+    
+    // 初始化userface.json文件
+    await initUserFaceFile();
     
     // 执行迁移
     await migrateOldFiles();
