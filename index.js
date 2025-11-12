@@ -248,7 +248,6 @@ const initialize = async () => {
     
     // 3. 设置配置文件
     await setConfig('./plugins/San-plugin/config/default_config', './plugins/San-plugin/config');
-    await setConfig('./plugins/San-plugin/resources/AI/config/default_config', './plugins/San-plugin/resources/AI/config');
     
     // 4. 加载插件
     const pluginFiles = fsS.readdirSync('./plugins/San-plugin/apps')

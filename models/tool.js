@@ -527,3 +527,32 @@ export function getId() {
   // 将两部分组合起来形成最终的唯一ID
   return timePart + randomPart;
 }
+
+export function getText(e) {
+  let text = ""
+  for(let item of e.message){
+    if(item?.type){
+      switch(item.type){
+        case "text":
+          text += item.text
+          break;
+        case "at":
+          text += `{at:${item.qq}}`
+          break;
+        case "face":
+          text += `{face:${item.id}}`
+          break;
+        case "image":
+          let MD5
+          if(item?.md5){
+            MD5 = item.md5//icqq协议
+          }else{
+            MD5 = item?.file.split('.').shift().toLowerCase();//ncqq协议
+          }
+          text += `{image:${MD5}}`//使用md5来标识图片
+          break;
+      }
+    }
+  }
+  return text
+}

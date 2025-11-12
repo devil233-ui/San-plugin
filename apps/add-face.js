@@ -55,7 +55,7 @@ export class San_AddFace extends plugin {
         try {
             const tag = user_tags[this.e.user_id].tag
             const iscontinous = user_tags[this.e.user_id]["iscontinous"]
-            let msg = this.e.msg
+            let msg = tool.getText(this.e)
             const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止','停止',
             '放弃','#结束添加', '#终止添加', '#停止添加', '#放弃添加', '#终止','#停止','#放弃'];
 
@@ -104,7 +104,7 @@ export class San_AddFace extends plugin {
             }
         }
         
-        let msg = e.msg
+        let msg = tool.getText(e)
         let reg = /^#(全局)?(批量|连续|多个|持续)?添加\s*(.*)$/;// ^#(批量|连续|多个|持续)?添加.*$
 
         let match = msg.match(reg)
@@ -143,7 +143,7 @@ export class San_AddFace extends plugin {
         }
 
         let reg = /^#?(散|san|San)设置表情添加(开启|关闭)$/
-        let str = e.msg
+        let str = tool.getText(e)
         const match = str.match(reg)
         //logger.info(match)
         const state = match[2]
@@ -205,7 +205,7 @@ export class San_AddFace extends plugin {
     async deleteface(e){
         
         let reg = /^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$/
-        const str = e.msg
+        const str = tool.getText(e)
         const match = str.match(reg)
         //logger.info(match)
         let isall = match[3] ? true : false
@@ -327,7 +327,7 @@ export class San_AddFace extends plugin {
         let code = undefined
         let atteptCount = 0
         while(atteptCount < maxAttempts && code === undefined){
-            const msg = e.msg 
+            const msg = tool.getText(e)
             const reg = /^#?(散|san|San)?来点(.*)$/
             let match = msg.match(reg)
             if(match[2] == ""){
@@ -383,10 +383,9 @@ export class San_AddFace extends plugin {
             return false
         }
 
-        let msg = e.msg
+        let msg = tool.getText(e)
         const obj = await tool.readFromJsonFile(faceFile)
         let keys = Object.keys(obj)
-        //logger.info(keys)
 
         if (keys.includes(msg)) {
             logger.info(`San-plugin表情回复 匹配到 ${msg}`)
