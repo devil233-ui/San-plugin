@@ -578,7 +578,12 @@ async function isFaceGroupApart() {
  * @param {string} tag - 表情的tag标签
  */
 async function HandelFace(e,tag,isglobal) {
-    let msgtype = e.message[0].type;//用户消息类型
+    let msgtype
+    if(e.message.length > 1){
+        msgtype = "other"
+    }else{
+        msgtype = e.message[0].type;//用户消息类型
+    }
     let Rand//获取消息随机数
     if(e?.real_id){
         //logger.info(this.e?.real_id)
@@ -603,8 +608,28 @@ async function HandelFace(e,tag,isglobal) {
         await tool.downloadImage(BascialDate.url, imageFile)
         BascialDate.imageFile = imageFile
     }
+    //对forward类型消息处理
+    if (msgtype == "forward") {
+        //let forwardMsg = []
+        //let data = common.makeForwardMsg(e, e.message[0]['content'], `聊天记录`);
+        let data = []
+        for(let item of e.message[0]['content']){
+            data.push({
+            'message': item.message,
+            'nickname': item.sender.nickname,
+            'user_id': item.sender.user_id,
+            'time': item.time
+            })
+        }
+        let forwardMsg = {
+            type: 'node',
+            data: data
+        }
+        BascialDate.type = "other"//非iamge消息存源码
+        BascialDate.msg = forwardMsg//存消息源码
+    }
     //对非iamge类型消息处理
-    if (msgtype !== "image") {
+    if (msgtype !== "image" && msgtype !== "forward") {
         BascialDate.type = "other"//非iamge消息存源码
         BascialDate.msg = e.message//存消息源码
     }
