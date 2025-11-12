@@ -74,6 +74,12 @@ export function supportGuoba () {
             component: 'Switch'
         },
         {
+            field: 'config.face_groupApart',
+            label: '表情群组分离',
+            bottomHelpMessage: '是否隔离每个群组添加的表情',
+            component: 'Switch'
+        },
+        {
             field: 'config.poke',
             label: '群聊戳一戳',
             bottomHelpMessage: '戳一戳功能,随机图',

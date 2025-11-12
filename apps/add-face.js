@@ -1,5 +1,6 @@
 import * as tool from '../models/tool.js';
 import fs from 'fs';
+import path from 'path';
 import yaml from 'js-yaml';
 import common from '../../../lib/common/common.js';
 let user_tags = {}//用作中转变量
@@ -40,6 +41,10 @@ export class San_AddFace extends plugin {
                     reg: '^(.*)$',
                     fnc: 'facereply',
                     log: false,
+                },
+                {
+                    reg: '^#?(散|san|San)?合并(表情|数据)?$',
+                    fnc: 'mergeFace'
                 },
             ]
         })
@@ -367,7 +372,7 @@ export class San_AddFace extends plugin {
             e.reply("消息风控,发送失败辣")
         }
     }
-
+    //表情触发并回复
     async facereply(e){
         if (!fs.existsSync(faceFile)) {
             return false
@@ -375,10 +380,12 @@ export class San_AddFace extends plugin {
         if (!isAddOpen()) {
             return false
         }
+
         let msg = e.msg
         const obj = await tool.readFromJsonFile(faceFile)
         let keys = Object.keys(obj)
         //logger.info(keys)
+
         if (keys.includes(msg)) {
             logger.info(`San-plugin表情回复 匹配到 ${msg}`)
             //logger.info(msgtype)
@@ -392,22 +399,56 @@ export class San_AddFace extends plugin {
             if (keys.includes(match[1])) {
                 msg = match[1]
                 logger.info(`San-plugin表情回复 匹配到 ${msg}`)
- 
             }else{
                 return false
             }
-            return false
         }
-        //const randomIndex = Math.floor(Math.random() * obj[msg].list.length);
-        // 重复进行两次随机操作，直到两次随机结果相同
-    let randomIndex;
-    do {
-        const firstRandomIndex = Math.floor(Math.random() * obj[msg].list.length);
-        const secondRandomIndex = Math.floor(Math.random() * obj[msg].list.length);
-        randomIndex = firstRandomIndex === secondRandomIndex ? firstRandomIndex : null;
-    } while (randomIndex === null);
-        const matchType = obj[msg].list[randomIndex].type
-        let face = obj[msg].list[randomIndex]
+        let indexArr = []
+        //判断是否为群组消息
+        if(await isFaceGroupApart()){
+            if(e.isGroup){
+                //判断是否为群组分离状态
+                    //返回符合条件的表情
+                    //faceArr = obj[msg].list.filter(i => i.belong.includes(e.group_id) || i.belong.length == 0 || !(i?.belong))
+                    let i = -1
+                    for(let item of obj[msg][`list`]){
+                        i++
+                        if(item.belong.includes(e.group_id) || item.belong.length == 0 || !(item?.belong)){
+                            indexArr.push(i)
+                        }
+                    }
+            }else{
+                //私聊情况下
+                for(let item of obj[msg][`list`]){
+                    let i = -1
+                    i++
+                    indexArr.push(i)
+                }
+                //权限判断
+                if (!(await tool.ismaster(e.user_id))) {
+                    logger.info(`已开启表情群组分离,非主人禁止私聊发送`)
+                    return false
+                }
+            }
+        }else{
+            for(let item of obj[msg][`list`]){
+                let i = -1
+                i++
+                indexArr.push(i)
+            }
+        }
+
+
+        if(indexArr.length < 1){ 
+            logger.info(`触发词-${msg}- 没有符合条件的表情`)
+            return false 
+        
+        } //没有符合条件的表情
+
+        //随机获取一个表情
+        let randomIndex = Math.floor(Math.random() * indexArr.length)
+        let face = obj[msg].list[indexArr[randomIndex]]
+        const matchType = face.type
 
         let sendmsg 
         //以下为iamge消息的处理
@@ -429,7 +470,7 @@ export class San_AddFace extends plugin {
         if (matchType == "face") {
             sendmsg = await e.reply(segment.face(obj[msg].list[randomIndex].id))
         }//face消息处理完毕
-
+        
         let Rand
         if(sendmsg?.data?.message_id){
             Rand = sendmsg.data.message_id// 目标rand值
@@ -450,7 +491,40 @@ export class San_AddFace extends plugin {
         }
         tool.JsonWrite(obj, faceFile)
         return false
-}
+    }
+
+    //合并原版崽的添加表情
+    // async mergeFace(e){
+    //     //权限判断
+    //     if ((await isAddOnlyOpen())){
+    //         if (!(await tool.ismaster(e.user_id))) {
+    //             e.reply('你不是我的主人哦')
+    //             return false
+    //         }
+    //     }
+    //     //TRSS崽处理方式
+    //     if(fs.existsSync("./data/messageJson")){
+    //         // 目标文件夹路径
+    //         const folderPath = './data/messageJson';
+    //         // 读取文件夹内容
+    //         let jsonFiles
+    //         fs.readdir(folderPath, (err, files) => {
+    //         if (err) throw err;
+    //         // 筛选.json后缀的文件
+    //         jsonFiles = files.filter(file => path.extname(file) === '.json');
+    //         });
+    //         for(let item of jsonFiles){
+    //             let oldData = await tool.readFromJsonFile(`${folderPath}/${item}`)
+    //             let allData = await tool.readFromJsonFile(faceFile)
+    //             const oldkey = Object.keys(oldData)
+    //             const allkey = Object.keys(allData)
+    //             for(let k of oldkey){
+    //                 //待定
+    //             }
+    //         }
+    //     }
+
+    // }
 }
 
 //监听模式,废弃
@@ -483,8 +557,17 @@ async function isAddOnlyOpen() {
     }
 }
 
+//返回表情群组分离的状态
+async function isFaceGroupApart() {
+    let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
+    const TorF = Cfg.face_groupApart
 
-
+    if (TorF) {
+        return true
+    }else{
+        return false
+    }
+}
 
 
 
@@ -506,8 +589,10 @@ async function HandelFace(e,tag) {
     let BascialDate = {
             'user_id': e.user_id,
             'time': tool.convertTime(Date.now(), 0),
+            'belong': (e.isGroup) ? [e.group_id] : [],//判断是否为群组消息
             'rand': [Rand],
     }
+
     //对iamge类型消息处理
     if (msgtype == "image") {
         BascialDate.type = "image"

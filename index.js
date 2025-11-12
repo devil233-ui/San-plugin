@@ -9,6 +9,14 @@ logger.info('-------------------------');
 logger.info('San-plugin加载中....');
 logger.info('-------------------------');
 
+//___初始化必要路径___
+const initPath = [
+  './plugins/San-plugin/resources/poke/api.yaml'
+]
+for(let item of initPath){
+  tool.checkPath(item)
+}
+
 //___迁移face文件位置(./plugins/San-plugin/resources/face -> ./data/San/face)___
 
 // 路径配置

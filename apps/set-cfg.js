@@ -126,6 +126,12 @@ export class San_SetCfg extends plugin {
                 case `戳一戳`:
                     Cfg_config.poke = ChangeButton ;
                     break;                   
+                case `表情群组分离`:
+                    Cfg_config.face_groupApart = ChangeButton ;
+                    break;                   
+                case `表情群组隔离`:
+                    Cfg_config.face_groupApart = ChangeButton ;
+                    break;                   
                 default:
                     break;
             }
@@ -153,6 +159,8 @@ export class San_SetCfg extends plugin {
                 `表情添加仅主人：${button(Cfg_config.add_onlyMaster)}`,
                 `戳一戳：${button(Cfg_config.poke)}`,
                 `戳一戳仅bot：${button(Cfg_config.add_onlyBot)}`,
+                `表情群组分离：${button(Cfg_config.face_groupApart)}`,
+                `表情群组隔离：${button(Cfg_config.face_groupApart)}`,
             ]
             for (let i of CfgInfo){
                 sendMsg.push(i)
