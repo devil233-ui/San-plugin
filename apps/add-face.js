@@ -127,6 +127,10 @@ export class San_AddFace extends plugin {
         if(await tool.getsource(e)){//如果存在引用消息
             //logger.info(await tool.getsource(e))
             let source = await tool.getsource(e)
+            // if(source.message[0].type == "json" && e?.getReply){
+            //     e.reply([segment.reply(source.message_id), "暂时不支持NC崽对Bot所发聊天记录消息的引用添加,请使用非引用添加,并手动转发此消息"])
+            //     return false
+            // }
             source.reply=e.reply
             await HandelFace(source,match[3])
         }else{
@@ -324,9 +328,9 @@ export class San_AddFace extends plugin {
     async laidian(e){
         // laidianNub默认值定义在代码顶部 默认为10
         let sendNub = laidianNub
-        let code = undefined
+        let res = 'failed'
         let atteptCount = 0
-        while(atteptCount < maxAttempts && code === undefined){
+        while(atteptCount < maxAttempts && res === 'failed'){
             const msg = tool.getText(e)
             const reg = /^#?(散|san|San)?来点(.*)$/
             let match = msg.match(reg)
@@ -366,11 +370,16 @@ export class San_AddFace extends plugin {
 
             atteptCount++
             let sendmsg = await common.makeForwardMsg(e,replymsg,`-${match[2]}-`)
-            logger.warn(code,`第${atteptCount}次尝试发送`)
-            code = await e.reply(sendmsg) //如果发送失败该值为undefined
-
+            logger.warn(`第${atteptCount}次尝试发送`)
+            let code = await e.reply(sendmsg) //如果发送失败 IC:undefined , NC:{error: xxxx }
+            if(typeof code == 'object'){
+                 res = Object.keys(code)
+                 
+            }else if(code == undefined){
+                res = 'success'
+            }
         }
-        if (code === undefined) {
+        if (res == 'failed') {
             e.reply("消息风控,发送失败辣")
         }
     }
