@@ -529,7 +529,23 @@ export function getId() {
   return timePart + randomPart;
 }
 
-export function getText(e) {
+export async function getText(e) {
+
+  //存在回复消息时
+  //@逻辑:
+        //多个连续相同@只取其一
+        //回复消息时存在一个隐藏的@引用者 在句首 删除文本@无用
+        //每个@后会存在一个空格
+  if(e?.getReply || e?.source){
+    for(let i = 0; i < e.message.length;i++){
+      let item = e.message[i]
+      if(item.type == "at"){
+        e.message.splice(i,1)
+        break;
+      }
+    }
+  }
+
   let text = ""
   for(let item of e.message){
     if(item?.type){
@@ -555,12 +571,25 @@ export function getText(e) {
       }
     }
   }
+
+  //前缀处理
   if(e.isGroup){
-    const groupCfg = config.getGroup(e.self_id, e.group_id)
-    let alias = groupCfg.botAlias
+    let botStyle = await  readFromJsonFile("package.json")
+    let groupCfg
+    switch(botStyle.name){
+      case "trss-yunzai" || "TRSS-Yunzai":
+        let uin = (e?.self_id) ? e.self_id : Bot.uin.toString() 
+        groupCfg = config.getGroup( uin, e.group_id)
+        break;
+      case "miao-yunzai" || "Miao-Yunzai":
+        groupCfg = config.getGroup(e.group_id)
+        break;
+    }
+
+    let Botalias = groupCfg.botAlias
+    let alias = [...Botalias]
     alias.push(`{at:${e.self_id}}`)
     if (!Array.isArray(alias)) alias = [alias]
-
     for (const name of alias) if (text.startsWith(name)) text = lodash.trimStart(text, name).trim()
     return text
   }
