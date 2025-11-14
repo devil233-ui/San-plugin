@@ -589,6 +589,7 @@ export async function getText(e) {
     let Botalias = groupCfg.botAlias
     let alias = [...Botalias]
     alias.push(`{at:${e.self_id}}`)
+    text = lodash.trimStart(text)
     if (!Array.isArray(alias)) alias = [alias]
     for (const name of alias) if (text.startsWith(name)) text = lodash.trimStart(text, name).trim()
     return text
