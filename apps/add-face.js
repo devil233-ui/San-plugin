@@ -3,680 +3,685 @@ import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 import common from '../../../lib/common/common.js';
-let user_tags = {}//用作中转变量
-let laidianNub = 10 //来点表情 的发送表情数量(聊天记录形式)
-const maxAttempts = 10 //最大尝试重新发送次数
+import puppeteer from '../../../lib/puppeteer/puppeteer.js';
+import axios from 'axios'; //tooljs遇到聊天记录会下载两遍图
 
-let faceFile = "./data/San/face/userface.json"
+let user_tags = {};
+let laidianNub = 10;
+const maxAttempts = 10;
+let faceFile = "./data/San/face/userface.json";
+
 export class San_AddFace extends plugin {
     constructor() {
         super({
             name: 'San-plugin表情功能',
             dsc: 'San-plugin表情功能',
-            event: 'message', //发出提示信息
-            priority: '-100', //优先级
+            event: 'message',
+            priority: '-114514',
             rule: [
-                {
-                    reg: '^#(全局)?(批量|连续|多个|持续)?添加.*$',
-                    fnc: 'add'
-                    // 执行方法
-                },
-                {
-                    reg: '^#?(散|san|San)?表情列表$',
-                    fnc: 'facelist'
-                },
-                {
-                    reg: '^#?(散|san|San)设置表情添加(开启|关闭)$',
-                    fnc: 'addswitch'
-                },
-                {
-                    reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$',
-                    fnc: 'deleteface'
-                },
-                {
-                    reg: '^#?(散|san|San)?来点(.*)$',
-                    fnc: 'laidian'
-                },
-                {
-                    reg: '^(.*)$',
-                    fnc: 'facereply',
-                    log: false,
-                },
-                {
-                    reg: '^#?(散|san|San)?合并(表情|数据)?$',
-                    fnc: 'mergeFace'
-                },
+                { reg: '^#(全局)?(批量|连续|多个|持续)?添加.*$', fnc: 'add' },
+                { reg: '^#?(散|san|San)?表情列表$', fnc: 'facelist' },
+                { reg: '^#?(散|san|San)设置表情添加(开启|关闭)$', fnc: 'addswitch' },
+                { reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$', fnc: 'deleteface' },
+                { reg: '^#?(散|san|San)?来点(.*)$', fnc: 'laidian' },
+                { reg: '^(.*)$', fnc: 'facereply', log: false },
+                { reg: '^#?(散|san|San)?合并(表情|数据)?$', fnc: 'mergeFace' },
             ]
-        })
-
+        });
     }
 
     async addnext(e) {
         try {
-            const tag = user_tags[this.e.user_id].tag
-            const iscontinous = user_tags[this.e.user_id]["iscontinous"]
-            let msg = await tool.getText(this.e)
-            const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止','停止',
-            '放弃','#结束添加', '#终止添加', '#停止添加', '#放弃添加', '#终止','#停止','#放弃'];
+            const tag = user_tags[this.e.user_id].tag;
+            const iscontinous = user_tags[this.e.user_id]["iscontinous"];
+            let msg = await tool.getText(this.e);
+            const stoplist = ['结束添加', '终止添加', '停止添加', '放弃添加', '终止', '停止', '放弃', '#结束添加', '#终止添加', '#停止添加', '#放弃添加', '#终止', '#停止', '#放弃'];
 
-            //判断是否结束
-            if(iscontinous){
+            if (iscontinous) {
                 if (stoplist.includes(msg)) {
                     e.reply(`- ${tag} - 连续添加已结束`);
-                    delete user_tags[e.user_id]; // 清除用户的tag
-                    this.finish('addnext')
+                    delete user_tags[e.user_id];
+                    this.finish('addnext');
                     return;
                 }
-            }else{
+            } else {
                 if (stoplist.includes(msg)) {
-                e.reply('已放弃本次添加');
-                delete user_tags[e.user_id]; // 清除用户的tag
-                this.finish('addnext')
-                return;
+                    e.reply('已放弃本次添加');
+                    delete user_tags[e.user_id];
+                    this.finish('addnext');
+                    return;
                 }
             }
 
-            //添加表情
-            await HandelFace(this.e,tag,user_tags[this.e.user_id]["isglobal"])
-            
-            //判断是否结束
-            if(!iscontinous){
-                this.finish('addnext')                                 
-        }   
+            await HandelFace(this.e, tag, user_tags[this.e.user_id]["isglobal"]);
+            if (!iscontinous) { this.finish('addnext'); }
         } catch (error) {
-            e.reply("出错辣")
-            logger.error(error)
-            this.finish('addnext')
-            return;
+            e.reply("出错辣");
+            logger.error(error);
+            this.finish('addnext');
         }
-
-}
+    }
 
     async add(e) {
         if (!(await isAddOpen())) {
-            e.reply("表情添加已关闭,请发送#san设置表情添加开启")
-            return
+            e.reply("表情添加已关闭,请发送#san设置表情添加开启");
+            return;
         }
-        if ((await isAddOnlyOpen())){
+        if ((await isAddOnlyOpen())) {
             if (!(await tool.ismaster(e.user_id))) {
-                e.reply('你不是我的主人哦')
-                return false
+                e.reply('你不是我的主人哦');
+                return false;
             }
         }
-        
-        let msg = await tool.getText(e)
-        let reg = /^#(全局)?(批量|连续|多个|持续)?添加\s*(.*)$/;// ^#(批量|连续|多个|持续)?添加.*$
-
-        let match = msg.match(reg)
-        let iscontinous = match[2] ? true : false
-        let isglobal = match[1] ? true : false
-        //logger.info(match)
-        if (match[3] == '') {
-            e.reply("tag禁止为空!")
-            return
+        let msg = await tool.getText(e);
+        let reg = /^#(全局)?(批量|连续|多个|持续)?添加\s*(.*)$/;
+        let match = msg.match(reg);
+        if (!match || match[3] == '') {
+            e.reply("tag禁止为空!");
+            return;
         }
+        if (!user_tags[e.user_id]) { user_tags[e.user_id] = {}; }
+        user_tags[e.user_id]["tag"] = match[3];
+        user_tags[e.user_id]["iscontinous"] = !!match[2];
+        user_tags[e.user_id]["isglobal"] = !!match[1];
 
-        // 确保 user_tags 中有该用户的对象
-        if (!user_tags[e.user_id]) {
-            user_tags[e.user_id] = {};
-        }
-        user_tags[e.user_id]["tag"] = match[3] //获取到添加tag
-        user_tags[e.user_id]["iscontinous"] = iscontinous //获取到添加类型
-        user_tags[e.user_id]["isglobal"] = isglobal //获取到是否全局
-        
-        if(await tool.getsource(e)){//如果存在引用消息
-            //logger.info(await tool.getsource(e))
-            let source = await tool.getsource(e)
-            // if(source.message[0].type == "json" && e?.getReply){
-            //     e.reply([segment.reply(source.message_id), "暂时不支持NC崽对Bot所发聊天记录消息的引用添加,请使用非引用添加,并手动转发此消息"])
-            //     return false
-            // }
-            source.reply = e.reply
-            source.isGroup = e.isGroup
-            await HandelFace(source,match[3])
-        }else{
-        /** 设置上下文，后续接收到内容会执行hei方法 */
-        this.setContext('addnext');   
-        e.reply("请发送添加内容")
+        if (await tool.getsource(e)) {
+            let source = await tool.getsource(e);
+            source.reply = e.reply;
+            source.isGroup = e.isGroup;
+            await HandelFace(source, match[3]);
+        } else {
+            this.setContext('addnext');
+            e.reply("请发送添加内容");
         }
     }
 
     async addswitch(e) {
-        if (!(await tool.ismaster(e.user_id))) {
-            e.reply('你不是我的主人哦')
-            return false
-        }
-
-        let reg = /^#?(散|san|San)设置表情添加(开启|关闭)$/
-        let str = await tool.getText(e)
-        const match = str.match(reg)
-        //logger.info(match)
-        const state = match[2]
-        if (state == "开启") {
-            // let url = 'https://sanluo.icu:11111/down/RdDzehzqewKw.js'
-            // await tool.downloadImage(url, "node_modules/icqq/lib/message/parser.js")
-            let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
-            Cfg.add_face = true
-            const updateCfg = yaml.dump(Cfg);
-            fs.writeFile('./plugins/San-plugin/config/config.yaml', updateCfg, 'utf8', (err) => {
-                if (err) {
-                    logger.err('San-Plugin 错误：', err);
-                    return;
-                }
-            });
-            e.reply("已开启,手动重启后生效")
-        }
-
-        if (state == "关闭") {
-            // let url = 'https://sanluo.top:8888/down/aqcDyo9VfjQX.js'
-            // await tool.downloadImage(url, "node_modules/icqq/lib/message/parser.js")
-            let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
-            Cfg.add_face = false
-            const updateCfg = yaml.dump(Cfg);
-            fs.writeFile('./plugins/San-plugin/config/config.yaml', updateCfg, 'utf8', (err) => {
-                if (err) {
-                    logger.err('San-Plugin 错误：', err);
-                    return;
-                }
-            });
-            e.reply("已关闭")
-        }
-
+        if (!(await tool.ismaster(e.user_id))) { e.reply('你不是我的主人哦'); return false; }
+        let reg = /^#?(散|san|San)设置表情添加(开启|关闭)$/;
+        let str = await tool.getText(e);
+        const match = str.match(reg);
+        const state = match[2];
+        let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml');
+        Cfg.add_face = (state == "开启");
+        const updateCfg = yaml.dump(Cfg);
+        fs.writeFileSync('./plugins/San-plugin/config/config.yaml', updateCfg, 'utf8');
+        e.reply(`已${state},手动重启后生效`);
     }
 
-
-    async facelist(e){
-        let facelist = await getFaceData()
-        let keys = Object.keys(facelist)
-        let msg =""
-        let t =1
-        //logger.error(`isAddOpen ${isAddOnlyOpen()}`)
-        
-        if (!(await isAddOpen())){
-            msg = msg +`注意: 表情添加已关闭 开启-> `+ "\n"+`#san设置表情添加开启 `+ "\n"
+    async facelist(e) {
+        let facelist = await getFaceData();
+        let keys = Object.keys(facelist);
+        let msg = "";
+        let t = 1;
+        if (!(await isAddOpen())) { msg += `注意: 表情添加已关闭 开启-> \n#san设置表情添加开启 \n`; }
+        for (let i of keys) {
+            msg += `${t}.  - ${i} - :  ${facelist[i].list.length}项\n`;
+            t++;
         }
-        for (let i of keys){
-            let facetag = facelist[i].list
-            let number = facetag.length
-            msg = msg +`${t}.  - ${i} - :  ${number}项`+ "\n"
-            t++
-
-        }
-        let replymsg = await common.makeForwardMsg(e,[`总计${keys.length}个表情`,msg],"-表情列表-")
-        e.reply(replymsg)
+        let rawList = [`总计${keys.length}个表情`, msg];
+        let replymsg = await common.makeForwardMsg(e, rawList, "-表情列表-");
+        await sendForwardMsgWithFallback(e, replymsg, rawList, "表情列表");
     }
 
+    async deleteface(e) {
+        let reg = /^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$/;
+        const str = await tool.getText(e);
+        const match = str.match(reg);
+        let isall = !!match[3];
+        let facetag = match[4];
+        let facelist = await getFaceData();
+        let keys = Object.keys(facelist);
 
-    async deleteface(e){
-        
-        let reg = /^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$/
-        const str = await tool.getText(e)
-        const match = str.match(reg)
-        //logger.info(match)
-        let isall = match[3] ? true : false
-        let facetag = match[4]//tag名  没有时为 ''
-        let facelist = await getFaceData()
-        let keys = Object.keys(facelist)
-
-            if(isall){
-                if(!tool.ismaster(e.user_id)){
-
-                    e.reply("非主人无法删除表情包含的全部项")
-                    return//非主人尝试删除全部项
-                }
-                    if (facetag == ''){
-                        e.reply("需要删除的表情tag为空!")
-                        return//空tag
-                    }
-                  if (!(keys.includes(facetag))){
-                        e.reply(`表情- ${facetag} - 不存在!`)
-                        return//不存在此表情tag
-                    }
-            }
-        
-
-        //删除全部项
-        if (isall){
-            //logger.info(facelist)
-            for (let i of facelist[facetag].list ){
-                logger.info(i)
-                if(i?.imageFile){
-                    logger.info(i.imageFile)
-                    try {
-                        fs.unlinkSync(i.imageFile)
-                    } catch (error) {
-                        logger.error(error)
-                    }
-                    
+        const cleanInnerImages = (msgData) => {
+            if (!msgData) return;
+            let strData = JSON.stringify(msgData);
+            let regex = /data\/San\/face\/images\/[^"'\\]+\.gif/g;
+            let fileMatch;
+            let deletedCount = 0;
+            while ((fileMatch = regex.exec(strData)) !== null) {
+                let relativePath = "./" + fileMatch[0];
+                let absPath = path.resolve(relativePath);
+                if (fs.existsSync(absPath)) {
+                    try { 
+                        fs.unlinkSync(absPath); 
+                        logger.mark(`[San-Plugin] 🗡️已物理超度本地图片: ${absPath}`);
+                        deletedCount++;
+                    } catch (err) { logger.error(`[San-Plugin] 删除图片失败: ${absPath}`, err); }
                 }
             }
-            delete facelist[facetag]
-            //logger.info(facelist)
-            await tool.JsonWrite(facelist,faceFile)
-
-            e.reply(`已删除- ${facetag} -包含的全部项`)
-        }
-        
-
-        //删除指定项
-         if (!isall){
-            let source = ""
-            if (e.getReply) {
-                source = await e.getReply()
-              } else if (e.source) {
-                if (e.group?.getChatHistory) {
-                  source = (await e.group.getChatHistory(e.source.seq, 1)).pop()
-                } else if (e.friend?.getChatHistory) {
-                  source = (await e.friend.getChatHistory(e.source.time, 1)).pop()
-                }
-              }         
-            if (!source){
-                e.reply("请引用消息来删除")
-                return
+            if (deletedCount === 0) {
+                logger.mark(`[San-Plugin] 扫描完毕，未发现内部遗留图片需要清理。`);
             }
-            let targetRand
-            if(source.real_id){
-                targetRand = source.message_id// 目标rand值
-            }else if(source.rand){
-                targetRand = source.rand// 目标rand值
+        };
 
-            }
-            let obj = await tool.readFromJsonFile(faceFile)
+        if (isall) {
+            if (!tool.ismaster(e.user_id)) { e.reply("非主人无法删除全部项"); return; }
+            if (facetag == '') { e.reply("需要删除的表情tag为空!"); return; }
+            if (!(keys.includes(facetag))) { e.reply(`表情- ${facetag} - 不存在!`); return; }
             
-            let foundAndDeleted = false;
-
-            // 遍历对象的每个键
-            for (let key in obj) {
-              if (obj[key].list && Array.isArray(obj[key].list)) {
-                // 使用 filter 方法创建一个新的数组，排除掉包含目标 rand 值的对象
-                const newList = obj[key].list.filter(item => {
-                  if (item.rand && item.rand.includes(targetRand)) {
-                    foundAndDeleted = true;
-                    if(item?.imageFile){
-                        //logger.info(item.imageFile)
-                        try {
-                            fs.unlinkSync(item.imageFile)
-                        } catch (error) {
-                            logger.error(error)
-                        }    
-                    }
-                    return false;
-                  }
-                  return true;
-                });
-            
-                obj[key].list = newList;
-            
-                // 如果过滤后的 list 数组为空，删除该键
-                if (obj[key].list.length === 0) {
-                  delete obj[key];
-                }
-              }
-            }
-            
-            if (!foundAndDeleted) {
-              e.reply("没有找到该表情")
-            } else {
-                await tool.JsonWrite(obj,faceFile)
-                e.reply('已删除该项表情')
-            }
-
-
-         }
-
-    }
-
-    async laidian(e){
-        // laidianNub默认值定义在代码顶部 默认为10
-        let sendNub = laidianNub
-        let res = 'failed'
-        let atteptCount = 0
-        while(atteptCount < maxAttempts && res === 'failed'){
-            const msg = await tool.getText(e)
-            const reg = /^#?(散|san|San)?来点(.*)$/
-            let match = msg.match(reg)
-            if(match[2] == ""){
-                e.reply("表情名称为空!")
-                return
-            }
-            let obj = await tool.readFromJsonFile(faceFile)
-            //logger.info(obj)
-            let facelist = obj[match[2]].list
-            if(facelist.length < 10){sendNub = facelist.length}
-            let replymsg = []
-            for(let i = 0; i < sendNub; i++){
-                const randomIndex = Math.floor(Math.random() * facelist.length);
-                let face = facelist.splice(randomIndex, 1)[0]; // 移除并返回该元素
-                const matchType = face.type
-                //以下为iamge消息的处理
-                if (matchType == "image") {
-                    replymsg.push(segment.image(face.imageFile))
-                }//image消息处理完毕
-
-                //以下为other消息的处理
-                if (matchType == "other") {
-                    replymsg.push(face.msg)
-                }//other消息处理完毕  
-
-                //以下下为text消息的处理
-                if (matchType == "text") {
-                    replymsg.push(obj[msg].list[randomIndex].content)
-                }//text消息处理完毕
-
-                //以下下为face消息的处理
-                if (matchType == "face") {
-                    replymsg.push(segment.face(obj[msg].list[randomIndex].id))
-                }//face消息处理完毕
-            }
-
-            atteptCount++
-            let sendmsg = await common.makeForwardMsg(e,replymsg,`-${match[2]}-`)
-            logger.warn(`第${atteptCount}次尝试发送`)
-            let code = await e.reply(sendmsg) //如果发送失败 IC:undefined , NC:{error: xxxx }
-            if(typeof code == 'object'){
-                 res = Object.keys(code)
-                 
-            }else if(code == undefined){
-                res = 'success'
-            }
-        }
-        if (res == 'failed') {
-            e.reply("消息风控,发送失败辣")
-        }
-    }
-    //表情触发并回复
-    async facereply(e){
-        //判断目录 功能是否开启
-        if (!fs.existsSync(faceFile) || !isAddOpen()) {
-            return false
-        }
-
-        let msg = await tool.getText(e)
-        const obj = await tool.readFromJsonFile(faceFile)
-        let keys = Object.keys(obj)
-
-        if (keys.includes(msg)) {
-            logger.info(`San-plugin表情回复 匹配到 ${msg}`)
-            //logger.info(msgtype)
-        } else {
-            //兼容#开头字段 补充判断
-            let reg = /^#(.*)$/;
-            //logger.info(msg)
-            if (!msg) { return false } //排除非字符串消息
-            let match = msg.match(reg)
-            if (!match) { return false }
-            if (keys.includes(match[1])) {
-                msg = match[1]
-                logger.info(`San-plugin表情回复 匹配到 ${msg}`)
-            }else{
-                return false
-            }
-        }
-        let indexArr = []
-        //判断是否为群组消息
-        if(await isFaceGroupApart()){
-            if(e.isGroup){
-                //判断是否为群组分离状态
-                    //返回符合条件的表情
-                    let i = -1
-                    for(let item of obj[msg][`list`]){
-                        i++
-                        if(item?.belong?.includes(e.group_id) || item?.belong?.length == 0 || !(item?.belong)){
-                            indexArr.push(i)
+            logger.mark(`[San-Plugin] 启动全部删除指令，目标标签: ${facetag}`);
+            for (let i of facelist[facetag].list) {
+                if (i?.imageFile) {
+                    let regex = /data\/San\/face\/images\/[^"'\\]+\.gif/g;
+                    let m = regex.exec(i.imageFile);
+                    if (m) {
+                        let absPath = path.resolve("./" + m[0]);
+                        if (fs.existsSync(absPath)) {
+                            try { fs.unlinkSync(absPath); logger.mark(`[San-Plugin] 🗡️已物理超度封面大图: ${absPath}`); } catch (err) {}
                         }
                     }
-            }else{
-                //私聊情况下
-
-                //权限判断
-                if (!(await tool.ismaster(e.user_id))) {
-                    logger.info(`已开启表情群组分离,非主人禁止私聊发送`)
-                    return false
                 }
-
-                let i = -1
-                for(let item of obj[msg][`list`]){
-                    i++
-                    indexArr.push(i)
+                if (i?.msg) cleanInnerImages(i.msg);
+            }
+            
+            delete facelist[facetag];
+            await tool.JsonWrite(facelist, faceFile);
+            e.reply(`已删除- ${facetag} -包含的全部项及所有本地图片`);
+        } else {
+            let source = e.getReply ? await e.getReply() : (e.source ? (e.isGroup ? (await e.group.getChatHistory(e.source.seq, 1)).pop() : (await e.friend.getChatHistory(e.source.time, 1)).pop()) : null);
+            if (!source) { e.reply("请引用消息来删除"); return; }
+            let targetRand = source.real_id ? source.message_id : source.rand;
+            
+            logger.mark(`[San-Plugin] 尝试引用删除，目标 Rand/ID: ${targetRand}`);
+            let obj = await tool.readFromJsonFile(faceFile);
+            let found = false;
+            
+            for (let key in obj) {
+                if (obj[key].list) {
+                    obj[key].list = obj[key].list.filter(item => {
+                        if (item.rand && item.rand.includes(targetRand)) {
+                            found = true;
+                            logger.mark(`[San-Plugin] 🎯命中表情记录！开始执行毁灭打击...`);
+                            if (item?.imageFile) {
+                                let regex = /data\/San\/face\/images\/[^"'\\]+\.gif/g;
+                                let m = regex.exec(item.imageFile);
+                                if (m) {
+                                    let absPath = path.resolve("./" + m[0]);
+                                    if (fs.existsSync(absPath)) {
+                                        try { fs.unlinkSync(absPath); logger.mark(`[San-Plugin] 🗡️已物理超度封面大图: ${absPath}`); } catch (err) {}
+                                    }
+                                }
+                            }
+                            if (item?.msg) cleanInnerImages(item.msg);
+                            return false;
+                        }
+                        return true;
+                    });
+                    if (obj[key].list.length === 0) delete obj[key];
                 }
             }
-        }else{
-            let i = -1
-            for(let item of obj[msg][`list`]){
-                i++
-                indexArr.push(i)
-            }
+            if (!found) { 
+                e.reply("没有找到该表情（请确保引用的是最新版生成的图或回执）"); 
+                logger.mark(`[San-Plugin] ❌未在记录库中找到该 Rand/ID，已被删除或匹配失效。`);
+            } 
+            else { await tool.JsonWrite(obj, faceFile); e.reply('已删除该项表情及相关的本地图片'); }
         }
-
-
-        if(indexArr.length < 1){ 
-            logger.info(`触发词-${msg}- 没有符合条件的表情`)
-            return false 
-        
-        } //没有符合条件的表情
-
-        //随机获取一个表情
-        let randomIndex = Math.floor(Math.random() * indexArr.length)
-        let face = obj[msg].list[indexArr[randomIndex]]
-        const matchType = face.type
-
-        let sendmsg 
-        //以下为iamge消息的处理
-        if (matchType == "image") {
-            sendmsg = await e.reply([segment.image(face.imageFile)])
-        }//image消息处理完毕
-
-        //以下为other消息的处理
-        if (matchType == "other") {
-            sendmsg = await e.reply(face.msg)
-        }//other消息处理完毕  
-
-        //以下为forward消息的处理
-        if (matchType == "forward") {
-            let Msg = e.isGroup ? await e.group.makeForwardMsg(face.msg) : await e.friend.makeForwardMsg(face.msg)
-            sendmsg = await e.reply(Msg)
-        }//forward消息处理完毕  
-
-        //以下下为text消息的处理
-        if (matchType == "text") {
-            sendmsg = await e.reply(obj[msg].list[randomIndex].content)
-        }//text消息处理完毕
-
-        //以下下为face消息的处理
-        if (matchType == "face") {
-            sendmsg = await e.reply(segment.face(obj[msg].list[randomIndex].id))
-        }//face消息处理完毕
-        
-        let Rand
-        if(sendmsg?.data?.message_id){
-            Rand = sendmsg.data.message_id// 目标rand值
-        }else if(sendmsg?.rand){
-            Rand = sendmsg.rand// 目标rand值
-        }
-
-        if ("rand" in face){
-            if(face["rand"].length >= 5){
-                face["rand"].shift()
-                face["rand"].push(Rand)
-            }else{
-                face["rand"].push(Rand)
-            }   
-        }else{
-
-            face["rand"] = [Rand]           
-        }
-        tool.JsonWrite(obj, faceFile)
-        return false
     }
 
-    //合并原版崽的添加表情
-    // async mergeFace(e){
-    //     //权限判断
-    //     if ((await isAddOnlyOpen())){
-    //         if (!(await tool.ismaster(e.user_id))) {
-    //             e.reply('你不是我的主人哦')
-    //             return false
-    //         }
-    //     }
-    //     //TRSS崽处理方式
-    //     if(fs.existsSync("./data/messageJson")){
-    //         // 目标文件夹路径
-    //         const folderPath = './data/messageJson';
-    //         // 读取文件夹内容
-    //         let jsonFiles
-    //         fs.readdir(folderPath, (err, files) => {
-    //         if (err) throw err;
-    //         // 筛选.json后缀的文件
-    //         jsonFiles = files.filter(file => path.extname(file) === '.json');
-    //         });
-    //         for(let item of jsonFiles){
-    //             let oldData = await tool.readFromJsonFile(`${folderPath}/${item}`)
-    //             let allData = await tool.readFromJsonFile(faceFile)
-    //             const oldkey = Object.keys(oldData)
-    //             const allkey = Object.keys(allData)
-    //             for(let k of oldkey){
-    //                 //待定
-    //             }
-    //         }
-    //     }
+    async laidian(e) {
+        let sendNub = laidianNub;
+        const msg = await tool.getText(e);
+        const reg = /^#?(散|san|San)?来点(.*)$/;
+        let match = msg.match(reg);
+        if (!match || match[2] == "") { e.reply("表情名称为空!"); return; }
+        let obj = await tool.readFromJsonFile(faceFile);
+        let facelist = obj[match[2]]?.list;
+        if (!facelist) { e.reply("未找到该表情哦"); return; }
+        if (facelist.length < 10) { sendNub = facelist.length; }
+        let replymsg = [];
+        let tempFacelist = [...facelist];
+        for (let i = 0; i < sendNub; i++) {
+            const randomIndex = Math.floor(Math.random() * tempFacelist.length);
+            let face = tempFacelist.splice(randomIndex, 1)[0];
+            if (face.type == "image") replymsg.push(segment.image(face.imageFile));
+            if (face.type == "other") replymsg.push(JSON.parse(JSON.stringify(face.msg)));
+            if (face.type == "text") replymsg.push(face.content);
+            if (face.type == "face") replymsg.push(segment.face(face.id));
+            if (face.type == "forward") {
+                let pristineMsg = JSON.parse(JSON.stringify(face.msg));
+                let pristineArr = Array.isArray(pristineMsg) ? pristineMsg : [pristineMsg];
+                let hasNested = pristineArr.some(n => {
+                    let msgs = Array.isArray(n.message) ? n.message : [n.message];
+                    return msgs.some(m => m && (m.type === 'forward' || m.type === 'node'));
+                });
+                
+                if (hasNested) {
+                    let imgSeg = await fallbackToImage(e, pristineArr, `嵌套记录片段`, null, true);
+                    replymsg.push({ message: [segment.image(imgSeg)], nickname: 'San-Plugin', user_id: e.self_id });
+                } else {
+                    replymsg.push(...pristineArr);
+                }
+            }
+        }
+        let sendmsg = await common.makeForwardMsg(e, replymsg, `-${match[2]}-`);
+        await sendForwardMsgWithFallback(e, sendmsg, replymsg, `-${match[2]}-`);
+    }
 
-    // }
+    async facereply(e) {
+        if (!fs.existsSync(faceFile) || !(await isAddOpen())) return false;
+        let msg = await tool.getText(e);
+        const obj = await tool.readFromJsonFile(faceFile);
+        let keys = Object.keys(obj);
+        if (!keys.includes(msg)) {
+            let match = (msg || "").match(/^#(.*)$/);
+            if (match && keys.includes(match[1])) { msg = match[1]; } else { return false; }
+        }
+        logger.info(`San-plugin表情回复 匹配到 ${msg}`);
+        let indexArr = [];
+        let list = obj[msg].list;
+        if (await isFaceGroupApart()) {
+            if (e.isGroup) {
+                list.forEach((item, i) => { if (!item.belong || item.belong.length == 0 || item.belong.includes(e.group_id)) indexArr.push(i); });
+            } else {
+                if (!(await tool.ismaster(e.user_id))) { logger.info(`群组分离开启,非主人禁止私聊`); return false; }
+                list.forEach((_, i) => indexArr.push(i));
+            }
+        } else { list.forEach((_, i) => indexArr.push(i)); }
+
+        if (indexArr.length < 1) return false;
+        let face = list[indexArr[Math.floor(Math.random() * indexArr.length)]];
+        let addTime = face?.time || null;
+
+        let sendmsg;
+        if (face.type == "image") sendmsg = await e.reply([segment.image(face.imageFile)]);
+        if (face.type == "other") {
+            let pristineMsg = face.msg; 
+            let clonedMsg = JSON.parse(JSON.stringify(pristineMsg)); 
+            let rawMsg = Array.isArray(clonedMsg) ? clonedMsg : [clonedMsg];
+            let pristineArr = Array.isArray(pristineMsg) ? pristineMsg : [pristineMsg];
+            sendmsg = await sendForwardMsgWithFallback(e, rawMsg, pristineArr, msg, addTime);
+        }
+        if (face.type == "forward") {
+            let pristineMsg = face.msg;
+            let pristineArr = Array.isArray(pristineMsg) ? pristineMsg : [pristineMsg];
+            
+            let hasNested = pristineArr.some(n => {
+                let msgs = Array.isArray(n.message) ? n.message : [n.message];
+                return msgs.some(m => m && (m.type === 'forward' || m.type === 'node'));
+            });
+
+            if (hasNested) {
+                e.reply(`[San-Plugin] 检测到套娃，为绕开腾讯服务器，已接管进行强制渲染！`);
+                sendmsg = await fallbackToImage(e, pristineArr, msg, addTime);
+            } else {
+                let clonedMsg = JSON.parse(JSON.stringify(pristineMsg));
+                let Msg = e.isGroup ? await e.group.makeForwardMsg(clonedMsg) : await e.friend.makeForwardMsg(clonedMsg);
+                sendmsg = await sendForwardMsgWithFallback(e, Msg, pristineArr, msg, addTime);
+            }
+        }
+        if (face.type == "text") sendmsg = await e.reply(face.content);
+        if (face.type == "face") sendmsg = await e.reply(segment.face(face.id));
+
+        let Rand = sendmsg?.data?.message_id || sendmsg?.message_id || sendmsg?.rand;
+        if (Rand) {
+            if (!face.rand) face.rand = [];
+            face.rand.push(Rand);
+            if (face.rand.length > 5) face.rand.shift();
+            tool.JsonWrite(obj, faceFile);
+        } else {
+            logger.warn(`[San-Plugin] 未能获取到成功发送消息的回执 Rand，本次发送将无法引用删除。`);
+        }
+        return false;
+    }
 }
 
-//监听模式,废弃
-// Bot.on?.("message", async(e) => {
+// **** 辅助方法保持不变 ****
+async function isAddOpen() { let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml'); return !!Cfg.add_face; }
+async function isAddOnlyOpen() { let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml'); return !!Cfg.add_onlyMaster; }
+async function isFaceGroupApart() { let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml'); return !!Cfg.face_groupApart; }
+async function getFaceData() { return await tool.readFromJsonFile(faceFile); }
+
+async function safeDownloadImage(url, targetPath) {
+    try {
+        const response = await axios({ url, method: 'get', responseType: 'arraybuffer' });
+        fs.writeFileSync(targetPath, response.data);
+    } catch (error) {
+        throw new Error(`下载异常: ${error.message}`);
+    }
+}
+
+async function extractAndDownloadMsg(e) {
+    let rawMsg = e.message || [];
+    let isForward = false;
     
-// })
+    const getUid = (node) => Number(node.sender?.user_id || node.user_id || node.sender?.uin || node.uin || node.qq) || 10000;
+    
+    if (rawMsg.length > 0) {
+        let first = rawMsg[0];
+        let outerContent = first.content || first.data?.content;
+        let outerResid = first.id || first.data?.id;
 
-
-//****以下为相关方法****\\
-//返回表情添加的状态
-async function isAddOpen() {
-    let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
-    const TorF = Cfg.add_face
-    if (TorF) {
-        return true
-    }else{
-        return false
-    }
-}
-
-//返回表情添加仅主人的状态
-async function isAddOnlyOpen() {
-    let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
-    const TorF = Cfg.add_onlyMaster
-
-    if (TorF) {
-        return true
-    }else{
-        return false
-    }
-}
-
-//返回表情群组分离的状态
-async function isFaceGroupApart() {
-    let Cfg = await tool.readyaml('./plugins/San-plugin/config/config.yaml')
-    const TorF = Cfg.face_groupApart
-
-    if (TorF) {
-        return true
-    }else{
-        return false
-    }
-}
-
-
-
-/**
- * 处理用户发送的表情消息
- * @param {Object} e - 用户消息对象,请传this.e
- * @param {string} tag - 表情的tag标签
- */
-async function HandelFace(e,tag,isglobal) {
-    let msgtype
-    if(e.message.length > 1){
-        msgtype = "other"
-    }else{
-        msgtype = e.message[0].type;//用户消息类型
-    }
-    let Rand//获取消息随机数
-    if(e?.real_id){
-        //logger.info(this.e?.real_id)
-        Rand = e.message_id// 目标rand值
-    }else{
-        Rand = e.rand// 目标rand值
-    }
-    let date = await tool.readFromJsonFile(faceFile)//获取所有表情json
-    let BascialDate = {
-            'user_id': e.user_id,
-            'time': tool.convertTime(Date.now(), 0),
-            'belong': (e.isGroup && !isglobal) ? [e.group_id] : [],//判断是否为群组消息
-            'rand': [Rand],
-    }
-
-    //对iamge类型消息处理
-    if (msgtype == "image") {
-        BascialDate.type = "image"
-        BascialDate.url = e.message[0].url//添加图片链接,腾讯图链似乎一段时间后会过期
-        //image下载至本地
-        let imageFile = `./data/San/face/images/${tool.getId()}.gif`//构造表情图片id
-        await tool.downloadImage(BascialDate.url, imageFile)
-        BascialDate.imageFile = imageFile
-    }
-    //对forward类型消息处理
-    if (msgtype == "forward" || msgtype == "json") {
-        //let forwardMsg = []
-        //let data = common.makeForwardMsg(e, e.message[0]['content'], `聊天记录`);
-        let data = await tool.getFMsg(e)
-        BascialDate.type = "forward"//非iamge消息存源码
-        BascialDate.msg = data//存消息数组 未进行制作合并转发
-    }
-    //对非iamge类型消息处理
-    if (msgtype !== "image" && msgtype !== "forward" && msgtype !== "json") {
-        for(let i of e.message){
-            if(i.type == "image"){
-            let imageFile = `./data/San/face/images/${tool.getId()}.gif`//构造表情图片id
-            await tool.downloadImage(i.url, imageFile)
-            i.file = imageFile
+        if (first.type === 'forward' && Array.isArray(outerContent)) {
+            isForward = true;
+            let normalizedNodes = [];
+            for (let item of outerContent) {
+                normalizedNodes.push({
+                    message: item.message,
+                    nickname: item.sender?.nickname || item.nickname || '转发',
+                    user_id: getUid(item),
+                    time: item.time
+                });
+            }
+            rawMsg = normalizedNodes;
+        } else if ((first.type === 'forward' && outerResid) || (first.type === 'json' && typeof first.data === 'string' && first.data.includes('com.tencent.multimsg'))) {
+            isForward = true;
+            let resid = outerResid;
+            if (!resid) {
+                try { resid = JSON.parse(first.data)?.meta?.detail?.resid; } catch (err) {}
+            }
+            if (resid) {
+                let forwardData;
+                if (e.isGroup && e.group?.getForwardMsg) forwardData = await e.group.getForwardMsg(resid);
+                else if (e.friend?.getForwardMsg) forwardData = await e.friend.getForwardMsg(resid);
+                
+                if (forwardData && Array.isArray(forwardData)) {
+                    let normalizedNodes = [];
+                    for (let item of forwardData) {
+                        normalizedNodes.push({
+                            message: item.message,
+                            nickname: item.nickname || '转发',
+                            user_id: getUid(item),
+                            time: item.time
+                        });
+                    }
+                    rawMsg = normalizedNodes;
+                }
             }
         }
-        BascialDate.type = "other"//非iamge消息存源码
-        BascialDate.msg = e.message//存消息源码
     }
 
-    // if (msgtype == "json") {
+    let downloadCache = new Map();
 
-    //     const innerData = JSON.parse(e.message[0].data);
-    //     const resid = innerData.meta.detail.resid;
-    //     let data = await e.friend.getForwardMsg(resid)
-    //     logger.info(data)
-    //     //let dataBuffer = await e.group._newDownloadMultiMsg(resid,2)
-    //     // let data = Bot.icqq.core.pb.decode(dataBuffer).toJSON()
-    //     // logger.info(JSON.stringify(data, null, 2))
-    //     //logger.info(dataBuffer.toString("hex"))
-    //     logger.info("-----------------------------------")
-    //     //logger.info(dataBuffer)
-    // }
+    async function processElements(elements) {
+        let result = [];
+        for (let item of elements) {
+            if (!item) continue;
+            let clonedItem = JSON.parse(JSON.stringify(item));
+            
+            if (clonedItem.raw_message) delete clonedItem.raw_message;
+
+            if (clonedItem.type === 'image') {
+                let targetHttpUrl = null;
+                let targetBase64 = null;
+                let getStr = (obj, key) => (obj && typeof obj[key] === 'string') ? obj[key] : null;
+                let possibleVals = [
+                    getStr(clonedItem, 'url'), getStr(clonedItem, 'file'), getStr(clonedItem, 'base64'),
+                    getStr(clonedItem.data, 'url'), getStr(clonedItem.data, 'file'), getStr(clonedItem.data, 'base64')
+                ];
+                
+                for (let val of possibleVals) {
+                    if (!val) continue;
+                    if (val.startsWith('http')) targetHttpUrl = val;
+                    else if (val.startsWith('base64://') || val.startsWith('data:image') || val.length > 200) targetBase64 = val;
+                }
+
+                let imageFile, isSaved = false;
+                let imgAbsDir = path.resolve('./data/San/face/images');
+                if (!fs.existsSync(imgAbsDir)) fs.mkdirSync(imgAbsDir, { recursive: true });
+
+                if (targetHttpUrl) {
+                    let uniqueId = targetHttpUrl.replace(/&rkey=[^&]+/, '');
+                    if (downloadCache.has(uniqueId)) {
+                        imageFile = downloadCache.get(uniqueId);
+                        isSaved = true;
+                    } else {
+                        imageFile = path.join(imgAbsDir, `${tool.getId()}.gif`);
+                        try {
+                            await safeDownloadImage(targetHttpUrl, imageFile);
+                            downloadCache.set(uniqueId, imageFile);
+                            isSaved = true;
+                        } catch (err) {}
+                    }
+                } else if (targetBase64) {
+                    imageFile = path.join(imgAbsDir, `${tool.getId()}.gif`);
+                    try {
+                        let b64Data = targetBase64.replace(/^base64:\/\//i, '').replace(/^data:image\/[a-z]+;base64,/i, '').replace(/\s+/g, '');
+                        fs.writeFileSync(imageFile, Buffer.from(b64Data, 'base64'));
+                        isSaved = true;
+                    } catch (err) {}
+                }
+
+                if (isSaved) {
+                    let cleanHugeStrings = (obj) => {
+                        if (!obj) return;
+                        for (let k in obj) { if (typeof obj[k] === 'string' && obj[k].length > 200) delete obj[k]; }
+                    };
+                    cleanHugeStrings(clonedItem);
+                    cleanHugeStrings(clonedItem.data);
+
+                    let finalRelativePath = `./data/San/face/images/${path.basename(imageFile)}`;
+                    if (clonedItem.data) {
+                        clonedItem.data.file = finalRelativePath; delete clonedItem.data.url; delete clonedItem.data.base64;
+                    } else {
+                        clonedItem.file = finalRelativePath; delete clonedItem.url; delete clonedItem.base64;
+                    }
+                }
+                result.push(clonedItem);
+            } 
+            else if (clonedItem.type === 'forward') {
+                let nestedContent = clonedItem.content || clonedItem.data?.content;
+                let resid = clonedItem.id || clonedItem.data?.id;
+                let forwardData = null;
+
+                if (Array.isArray(nestedContent)) {
+                    forwardData = nestedContent;
+                } else if (resid) {
+                    if (e.isGroup && e.group?.getForwardMsg) forwardData = await e.group.getForwardMsg(resid);
+                    else if (e.friend?.getForwardMsg) forwardData = await e.friend.getForwardMsg(resid);
+                }
+
+                if (forwardData && Array.isArray(forwardData)) {
+                    let normalizedNodes = [];
+                    for (let n of forwardData) {
+                        normalizedNodes.push({
+                            message: n.message,
+                            nickname: n.sender?.nickname || n.nickname || '转发',
+                            user_id: getUid(n), 
+                            time: n.time
+                        });
+                    }
+                    let processedInner = await processElements(normalizedNodes);
+                    clonedItem = {
+                        type: 'forward',
+                        data: { content: processedInner }
+                    };
+                    result.push(clonedItem);
+                } else {
+                    result.push(clonedItem);
+                }
+            }
+            else if (clonedItem.message || clonedItem.data?.message) {
+                let innerMsg = clonedItem.message || clonedItem.data?.message;
+                let innerArray = Array.isArray(innerMsg) ? innerMsg : [innerMsg];
+                let processedInner = await processElements(innerArray);
+                
+                if (clonedItem.data && clonedItem.data.message) clonedItem.data.message = processedInner;
+                else if (clonedItem.message) clonedItem.message = processedInner;
+                
+                result.push(clonedItem);
+            }
+            else {
+                result.push(clonedItem);
+            }
+        }
+        return result;
+    }
+
+    let processed = await processElements(rawMsg);
+    
+    let type = 'other';
+    if (isForward || processed.some(i => i.nickname && i.message)) {
+        type = 'forward';
+    } else if (processed.length === 1 && processed[0].type === 'image') {
+        type = 'image';
+    }
+    
+    return { type, msg: processed };
+}
+
+async function HandelFace(e, tag, isglobal) {
+    let Rand = e.real_id ? e.message_id : e.rand;
+    let date = await tool.readFromJsonFile(faceFile);
+    let BascialDate = { 'user_id': e.user_id, 'time': tool.convertTime(Date.now(), 0), 'belong': (e.isGroup && !isglobal) ? [e.group_id] : [], 'rand': [Rand] };
+
+    let extracted = await extractAndDownloadMsg(e);
+    BascialDate.type = extracted.type;
+    
+    if (extracted.type === 'image') {
+        BascialDate.imageFile = extracted.msg[0].file || extracted.msg[0].data?.file;
+    } else {
+        BascialDate.msg = extracted.msg;
+    }
+
+    if (!date[tag]) date[tag] = { list: [] };
+    date[tag].list.push(BascialDate);
+    tool.JsonWrite(date, faceFile);
+    e.reply(`- ${tag} -添加成功`);
+}
+
+async function sendForwardMsgWithFallback(e, forwardMsg, rawList, title, addTime = null) {
+    let code, isFailed = false;
+    try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SEND_TIMEOUT')), 10000));
+        code = await Promise.race([e.reply(forwardMsg), timeoutPromise]);
+        if (!code || code.errMsg || code.error) isFailed = true;
+    } catch (error) {
+        isFailed = true;
+        e.reply(`[San-Plugin] 发送合并转发${error.message === 'SEND_TIMEOUT' ? '超时(10s)' : '异常'}，准备触发转图兜底`);
+    }
+
+    if (isFailed) {
+        try { return await fallbackToImage(e, rawList, title, addTime); }
+        catch (err) { 
+            e.reply(`[San-Plugin] 降级转图失败: ${err.message || err}`); 
+            return await e.reply("发送被风控拦截且转图失败。"); 
+        }
+    }
+    return code;
+}
+
+async function fallbackToImage(e, rawList, title, addTime = null, returnSegment = false) {
  
+    const formatTime = (ts) => {
+        if (!ts) return '';
+        const date = new Date(ts * 1000);
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        const h = date.getHours().toString().padStart(2, '0');
+        const min = date.getMinutes().toString().padStart(2, '0');
+        return `${m}-${d} ${h}:${min}`;
+    };
 
+    const strToColor = (str) => {
+        let hash = 0;
+        for (let i = 0; i < (str?.length || 0); i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+        return `hsl(${Math.abs(hash) % 360}, 45%, 75%)`;
+    };
 
-    //存入表情对象
-    if (date[tag]) {
-        date[tag].list.push(BascialDate)//直接push到tag的子列表
-    }else{
-        date[tag] = {
-            'list': [BascialDate]
+    const recursiveRenderNodes = (elements, depth = 0) => {
+        let content = '';
+        if (!elements) return content;
+        
+        let nodesArray = Array.isArray(elements) ? elements : [elements];
+        for (let item of nodesArray) {
+            if (!item) continue;
+            const fakeAvatarIds = [10000, 1094950020];
+
+            if (typeof item === 'string' || item.type === 'text') {
+                let txt = typeof item === 'string' ? item : (item.text || item.data?.text || '');
+                content += `<div style="white-space: pre-wrap; margin: 0; padding: 0;">${txt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+            } 
+            else if (item.type === 'image') {
+                let url = item.file || item.data?.file || item.url || item.data?.url;
+                if (url) {
+                    if (url.startsWith('base64://')) { url = url.replace('base64://', 'data:image/png;base64,'); } 
+                    else if (!url.startsWith('http')) {
+                        let absPath = path.resolve(url).replace(/\\/g, '/');
+                        if (!absPath.startsWith('/')) absPath = '/' + absPath;
+                        url = encodeURI(`file://${absPath}`);
+                    }
+                    content += `<img src="${url}" style="max-width:250px; border-radius:6px; margin: 4px 0; display:block;"/>`;
+                }
+            }
+            else if (item.type === 'forward' || item.type === 'node' || item.message || item.data?.message) {
+                let innerElements = item.type === 'forward' ? (item.content || item.data?.content) : (item.message || item.data?.message);
+                let senderName = item.nickname || item.data?.nickname || item.name || item.data?.name || item.sender?.nickname || (item.type === 'forward' ? '[嵌套的聊天记录]' : '转发消息');
+                
+                // 提取userId
+                let userId = Number(item.user_id || item.data?.user_id || item.uin || item.sender?.user_id) || 10000;
+                // 提取精确时间
+                let msgTime = item.time || item.data?.time || null;
+
+                if (innerElements) {
+                    let innerContent = recursiveRenderNodes(innerElements, depth + 1);
+                    
+                    // 视觉递进色阶
+                    let bgColors = ['#f4f5f7', '#e6e8eb', '#dee2e6', '#d6dadd', '#ced4da'];
+                    let borderColors = ['#c0c4cc', '#adb5bd', '#9ca3af', '#868e96', '#727981'];
+                    let bg = bgColors[depth % bgColors.length];
+                    let border = borderColors[depth % borderColors.length];
+                    
+                    let avatarSize = Math.max(20, 28 - depth * 2);
+                    let avatarHtml = '';
+                    if (senderName !== '[嵌套的聊天记录]') {
+                        if (fakeAvatarIds.includes(userId)) {
+                            const nameArray = senderName ? [...senderName] : ['?'];
+                            const firstChar = nameArray[0];
+                            const bgColor = strToColor(senderName);
+                            avatarHtml = `<div style="width:${avatarSize}px; height:${avatarSize}px; border-radius:50%; margin-right:8px; background:${bgColor}; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:bold; font-size:${Math.max(10, avatarSize*0.6)}px; border:1px solid rgba(0,0,0,0.1);">${firstChar}</div>`;
+                        } else {
+                            avatarHtml = `<img src="https://q1.qlogo.cn/g?b=qq&nk=${userId}&s=100" style="width:${avatarSize}px; height:${avatarSize}px; border-radius:50%; margin-right:8px; border:1px solid rgba(0,0,0,0.1);" />`;
+                        }
+                    }
+
+                    content += `<div style="margin:0; padding:8px 12px; background:${bg}; border-radius:0; border-left:3px solid ${border}; display:flex; flex-direction:row; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; height:100%;">${avatarHtml}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                                <span style="color:#666; font-size:${Math.max(11, 13-depth)}px; font-weight:bold;">${senderName}</span>
+                                <span style="color:#adb5bd; font-size:11px; margin-left:8px; font-weight:normal;">${formatTime(msgTime)}</span>
+                            </div>
+                            <div style="margin:0; padding:0;">${innerContent}</div>
+                        </div>
+                    </div>`;
+                }
+            }
+        }
+        return content;
+    };
+
+    let fullContent = rawList.map(item => recursiveRenderNodes(item, 0)).join('');
+    let htmlBody = `<div style="background:#f4f5f7; border-radius:12px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,0.05);">${fullContent}</div>`;
+
+    let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+        body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; padding: 20px; width: 620px; margin:0;}
+        .box { background: #fff; border-radius: 18px; padding: 15px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header-container { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 15px; }
+        .t { font-size: 22px; font-weight: bold; color: #111; margin: 0; }
+        .add-time { font-size: 13px; color: #adb5bd; }
+    </style></head><body><div class="box">
+        <div class="header-container"><div class="t">${title}</div>${addTime ? `<div class="add-time">添加日期：${addTime}</div>` : ''}</div>
+        ${htmlBody}
+    </div></body></html>`;
+
+    // 使用唯一文件名，解决缓存和文件冲突问题
+    const tempId = Date.now() + Math.floor(Math.random() * 1000);
+    const tplPath = path.resolve(`./data/San/face/temp_render_${tempId}.html`);
+    
+    const dir = path.dirname(tplPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    fs.writeFileSync(tplPath, html, 'utf8');
+
+    let img;
+    try {
+        img = await puppeteer.screenshot('SanFace', { tplFile: tplPath });
+    } finally {
+        if (fs.existsSync(tplPath)) {
+            try { fs.unlinkSync(tplPath); } catch (e) {}
         }
     }
 
-    //存入表情json文件
-    tool.JsonWrite(date, faceFile)
-
-    e.reply(`- ${tag} -添加成功`)
-
-}
-
-async function getFaceData(e) {
-    const data = await tool.readFromJsonFile(faceFile)
-    return data
+    return returnSegment ? img : await e.reply(img);
 }
