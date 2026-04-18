@@ -23,7 +23,7 @@ export class San_AddFace extends plugin {
                 { reg: '^#?(散|san|San)?表情列表$', fnc: 'facelist' },
                 { reg: '^#?(散|san|San)设置表情添加(开启|关闭)$', fnc: 'addswitch' },
                 { reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$', fnc: 'deleteface' },
-                { reg: '^#?(散|san|San)?来点(.*)$', fnc: 'laidian' },
+                { reg: '^#(散|san|San)?来点(.*)$', fnc: 'laidian' },
                 { reg: '^(.*)$', fnc: 'facereply', log: false },
                 { reg: '^#?(散|san|San)?合并(表情|数据)?$', fnc: 'mergeFace' },
             ]
@@ -222,7 +222,7 @@ export class San_AddFace extends plugin {
     async laidian(e) {
         let sendNub = laidianNub;
         const msg = await tool.getText(e);
-        const reg = /^#?(散|san|San)?来点(.*)$/;
+        const reg = /^#(散|san|San)?来点(.*)$/;
         let match = msg.match(reg);
         if (!match || match[2] == "") { e.reply("表情名称为空!"); return; }
         let obj = await tool.readFromJsonFile(faceFile);
