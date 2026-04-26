@@ -24,6 +24,7 @@ export class San_AddFace extends plugin {
                 { reg: '^#?(散|san|San)设置表情添加(开启|关闭)$', fnc: 'addswitch' },
                 { reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$', fnc: 'deleteface' },
                 { reg: '^#(散|san|San)?来点(.*)$', fnc: 'laidian' },
+                { reg: '^#?(散|san|San)?全部(.*)$', fnc: 'quanbu' },
                 { reg: '^(.*)$', fnc: 'facereply', log: false },
                 { reg: '^#?(散|san|San)?合并(表情|数据)?$', fnc: 'mergeFace' },
             ]
@@ -256,6 +257,76 @@ export class San_AddFace extends plugin {
         }
         let sendmsg = await common.makeForwardMsg(e, replymsg, `-${match[2]}-`);
         await sendForwardMsgWithFallback(e, sendmsg, replymsg, `-${match[2]}-`);
+    }
+
+    // 【完美分批版】显示词条下所有表情
+    async quanbu(e) {
+        const msg = await tool.getText(e);
+        const reg = /^#?(散|san|San)?全部(.*)$/;
+        let match = msg.match(reg);
+        
+        if (!match || match[2] === "") { 
+            e.reply("要查看的表情名称为空!"); 
+            return; 
+        }
+        
+        let tag = match[2];
+        let obj = await tool.readFromJsonFile(faceFile);
+        let facelist = obj[tag]?.list;
+        
+        if (!facelist || facelist.length === 0) { 
+            e.reply("记录库中未找到该表情，或该词条下为空哦"); 
+            return; 
+        }
+
+        // 核心修改：定义分批大小，留出安全余量防风控
+        const CHUNK_SIZE = 90; 
+        
+        // 告诉群友一声，免得数据太多他们以为 bot 卡了
+        if (facelist.length > CHUNK_SIZE) {
+            e.reply(`[San-Plugin] 该词条下共有 ${facelist.length} 条记录，为防风控将分批发送，请稍候...`);
+        }
+
+        // 经典的数组分片循环
+        for (let i = 0; i < facelist.length; i += CHUNK_SIZE) {
+            let chunk = facelist.slice(i, i + CHUNK_SIZE);
+            let replymsg = [];
+            
+            for (let face of chunk) {
+                if (face.type == "image") replymsg.push(segment.image(face.imageFile));
+                if (face.type == "other") replymsg.push(JSON.parse(JSON.stringify(face.msg)));
+                if (face.type == "text") replymsg.push(face.content);
+                if (face.type == "face") replymsg.push(segment.face(face.id));
+                if (face.type == "forward") {
+                    let pristineMsg = JSON.parse(JSON.stringify(face.msg));
+                    let pristineArr = Array.isArray(pristineMsg) ? pristineMsg : [pristineMsg];
+                    let hasNested = pristineArr.some(n => {
+                        let msgs = Array.isArray(n.message) ? n.message : [n.message];
+                        return msgs.some(m => m && (m.type === 'forward' || m.type === 'node'));
+                    });
+                    
+                    if (hasNested) {
+                        let imgSeg = await fallbackToImage(e, pristineArr, `嵌套记录片段`, null, true);
+                        replymsg.push({ message: [segment.image(imgSeg)], nickname: 'San-Plugin', user_id: e.self_id });
+                    } else {
+                        replymsg.push(...pristineArr);
+                    }
+                }
+            }
+            
+            // 动态标题逻辑：如果是多批次，显示当前进度，否则直接显示总数
+            let titleText = facelist.length > CHUNK_SIZE 
+                ? `- 全部 ${tag} (${i + 1}-${Math.min(i + CHUNK_SIZE, facelist.length)}/${facelist.length}条) -` 
+                : `- 全部 ${tag} (${facelist.length}条) -`;
+                
+            let sendmsg = await common.makeForwardMsg(e, replymsg, titleText);
+            await sendForwardMsgWithFallback(e, sendmsg, replymsg, titleText);
+            
+            // 【防风控细节】：如果还有下一批数据，让 bot 睡 1.5 秒再发，防止因为高频发送被腾讯制裁
+            if (i + CHUNK_SIZE < facelist.length) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        }
     }
 
     async facereply(e) {
@@ -543,12 +614,12 @@ async function HandelFace(e, tag, isglobal) {
 async function sendForwardMsgWithFallback(e, forwardMsg, rawList, title, addTime = null) {
     let code, isFailed = false;
     try {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SEND_TIMEOUT')), 10000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SEND_TIMEOUT')), 30000));
         code = await Promise.race([e.reply(forwardMsg), timeoutPromise]);
         if (!code || code.errMsg || code.error) isFailed = true;
     } catch (error) {
         isFailed = true;
-        e.reply(`[San-Plugin] 发送合并转发${error.message === 'SEND_TIMEOUT' ? '超时(10s)' : '异常'}，准备触发转图兜底`);
+        e.reply(`[San-Plugin] 发送合并转发${error.message === 'SEND_TIMEOUT' ? '超时(30s)' : '异常'}，准备触发转图兜底`);
     }
 
     if (isFailed) {
