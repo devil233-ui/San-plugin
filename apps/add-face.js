@@ -19,12 +19,12 @@ export class San_AddFace extends plugin {
             event: 'message',
             priority: '-114514',
             rule: [
-                { reg: '^#(全局)?(批量|连续|多个|持续)?添加.*$', fnc: 'add' },
+                { reg: '^#?(全局)?(批量|连续|多个|持续)?添加.*$', fnc: 'add' },
                 { reg: '^#?(散|san|San)?表情列表$', fnc: 'facelist' },
                 { reg: '^#?(散|san|San)设置表情添加(开启|关闭)$', fnc: 'addswitch' },
                 { reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$', fnc: 'deleteface' },
                 { reg: '^#(散|san|San)?来点(.*)$', fnc: 'laidian' },
-                { reg: '^#?(散|san|San)?全部(.*)$', fnc: 'quanbu' },
+                { reg: '^#(散|san|San)?全部(.*)$', fnc: 'quanbu' },
                 { reg: '^(.*)$', fnc: 'facereply', log: false },
                 { reg: '^#?(散|san|San)?合并(表情|数据)?$', fnc: 'mergeFace' },
             ]
@@ -262,7 +262,7 @@ export class San_AddFace extends plugin {
     // 【完美分批版】显示词条下所有表情
     async quanbu(e) {
         const msg = await tool.getText(e);
-        const reg = /^#?(散|san|San)?全部(.*)$/;
+        const reg = /^#(散|san|San)?全部(.*)$/;
         let match = msg.match(reg);
         
         if (!match || match[2] === "") { 
@@ -614,12 +614,12 @@ async function HandelFace(e, tag, isglobal) {
 async function sendForwardMsgWithFallback(e, forwardMsg, rawList, title, addTime = null) {
     let code, isFailed = false;
     try {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SEND_TIMEOUT')), 30000));
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('SEND_TIMEOUT')), 60000));
         code = await Promise.race([e.reply(forwardMsg), timeoutPromise]);
         if (!code || code.errMsg || code.error) isFailed = true;
     } catch (error) {
         isFailed = true;
-        e.reply(`[San-Plugin] 发送合并转发${error.message === 'SEND_TIMEOUT' ? '超时(30s)' : '异常'}，准备触发转图兜底`);
+        e.reply(`[San-Plugin] 发送合并转发${error.message === 'SEND_TIMEOUT' ? '超时(60s)' : '异常'}，准备触发转图兜底`);
     }
 
     if (isFailed) {
