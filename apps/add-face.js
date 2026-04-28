@@ -75,7 +75,7 @@ export class San_AddFace extends plugin {
             }
         }
         let msg = await tool.getText(e);
-        let reg = /^#(全局)?(批量|连续|多个|持续)?添加\s*(.*)$/;
+        let reg = /^(全局)?(批量|连续|多个|持续)?添加\s*(.*)$/;
         let match = msg.match(reg);
         if (!match || match[3] == '') {
             e.reply("tag禁止为空!");
