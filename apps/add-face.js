@@ -23,8 +23,8 @@ export class San_AddFace extends plugin {
                 { reg: '^#?(散|san|San)?表情列表$', fnc: 'facelist' },
                 { reg: '^#?(散|san|San)设置表情添加(开启|关闭)$', fnc: 'addswitch' },
                 { reg: '^#?(散|san|San)?表情(删除|删去|去除)(全部项(.*?))?$', fnc: 'deleteface' },
-                { reg: '^#(散|san|San)?来点(.*)$', fnc: 'laidian' },
-                { reg: '^#(散|san|San)?全部(.*)$', fnc: 'quanbu' },
+                { reg: '^[#＃](散|san|San)?来点(.*)$', fnc: 'laidian' },
+                { reg: '^[#＃](散|san|San)?全部(.*)$', fnc: 'quanbu' },
                 { reg: '^(.*)$', fnc: 'facereply', log: false },
                 { reg: '^#?(散|san|San)?合并(表情|数据)?$', fnc: 'mergeFace' },
             ]
@@ -223,7 +223,7 @@ export class San_AddFace extends plugin {
     async laidian(e) {
         let sendNub = laidianNub;
         const msg = await tool.getText(e);
-        const reg = /^#(散|san|San)?来点(.*)$/;
+        const reg = /^[#＃]?(散|san|San)?来点\s*(.*)$/;
         let match = msg.match(reg);
         if (!match || match[2] == "") { e.reply("表情名称为空!"); return; }
         let obj = await tool.readFromJsonFile(faceFile);
@@ -262,7 +262,7 @@ export class San_AddFace extends plugin {
     // 【完美分批版】显示词条下所有表情
     async quanbu(e) {
         const msg = await tool.getText(e);
-        const reg = /^#(散|san|San)?全部(.*)$/;
+        const reg = /^[#＃]?(散|san|San)?全部(.*)$/;
         let match = msg.match(reg);
         
         if (!match || match[2] === "") { 
@@ -280,11 +280,11 @@ export class San_AddFace extends plugin {
         }
 
         // 核心修改：定义分批大小，留出安全余量防风控
-        const CHUNK_SIZE = 90; 
+        const CHUNK_SIZE = 10; 
         
         // 告诉群友一声，免得数据太多他们以为 bot 卡了
         if (facelist.length > CHUNK_SIZE) {
-            e.reply(`[San-Plugin] 该词条下共有 ${facelist.length} 条记录，为防风控将分批发送，请稍候...`);
+            e.reply(`该词条下共有 ${facelist.length} 条记录，将分批发送，请稍候...`);
         }
 
         // 经典的数组分片循环
