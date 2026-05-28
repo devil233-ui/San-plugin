@@ -97,6 +97,16 @@ export function supportGuoba () {
             component: 'SOFT_GROUP_BEGIN'
         },
         {
+            field: 'priority.add_face',
+            label: '表情添加',
+            bottomHelpMessage: '`群聊词条`,优先级越小越优先,可为负值,重启后生效',
+            component: 'Input',
+            required: true,
+            componentProps: {
+                placeholder: '请输入优先级'
+            }
+        },
+        {
             field: 'priority.weather',
             label: '天气信息',
             bottomHelpMessage: '`xx天气`,优先级越小越优先,可为负值,重启后生效',

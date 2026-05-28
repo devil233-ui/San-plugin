@@ -10,6 +10,7 @@ let user_tags = {};
 let laidianNub = 10;
 const maxAttempts = 10;
 let faceFile = "./data/San/face/userface.json";
+const cfg_priority = await tool.set_priority("San_AddFace");
 
 export class San_AddFace extends plugin {
     constructor() {
@@ -17,7 +18,7 @@ export class San_AddFace extends plugin {
             name: 'San-plugin表情功能',
             dsc: 'San-plugin表情功能',
             event: 'message',
-            priority: '-114514',
+            priority: 'cfg_priority',
             rule: [
                 { reg: '^#?(全局)?(批量|连续|多个|持续)?添加.*$', fnc: 'add' },
                 { reg: '^#?(散|san|San)?表情列表$', fnc: 'facelist' },
