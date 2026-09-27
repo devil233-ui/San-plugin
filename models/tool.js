@@ -563,13 +563,15 @@ export async function getText(e) {
           text += `{face:${item.id}}`
           break;
         case "image":
-          let MD5
-          if(item?.md5){
-            MD5 = item.md5//icqq协议
-          }else{
-            MD5 = item?.file.split('.').shift().toLowerCase();//ncqq协议
+          // 不同适配器提供的图片字段并不一致：Milky 只给 url，icqq 给 md5，ncqq 给 file。
+          // getText 只需要一个稳定标识，字段缺失时不能让整条消息的处理失败。
+          let imageId = item.md5
+            ?? item.file?.split('.').shift()?.toLowerCase()
+            ?? item.url
+            ?? item.data?.url
+          if (imageId) {
+            text += `{image:${imageId}}`//使用md5来标识图片
           }
-          text += `{image:${MD5}}`//使用md5来标识图片
           break;
       }
     }
